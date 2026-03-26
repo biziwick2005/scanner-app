@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#3ddc6e"/>
+  <link rel="manifest" href="manifest.json"/>
+  <title>About — EduReg</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo"><span class="nav-logo-dot"></span>EduReg</a>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link">Register</a>
+      <a href="attendance.html" class="nav-link">Attendance</a>
+      <a href="about.html" class="nav-link active">About</a>
+      <a href="admin.html" class="nav-link">Admin →</a>
+    </div>
+    <button class="nav-burger" id="burgerBtn" onclick="toggleMenu()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+<div class="nav-drawer" id="navDrawer">
+  <a href="index.html" class="nav-link">📋 Register</a>
+  <a href="attendance.html" class="nav-link">✅ Attendance</a>
+  <a href="about.html" class="nav-link active">👤 About</a>
+  <a href="admin.html" class="nav-link">🔒 Admin Panel</a>
+</div>
+
+<div class="container" style="padding-bottom:80px;">
+  <div class="about-hero">
+    <div class="hero-badge"><span class="nav-logo-dot" style="width:6px;height:6px;"></span>The Developer</div>
+    <h1 style="font-size:clamp(26px,5vw,44px);font-weight:800;letter-spacing:-1px;margin-bottom:6px;">About <span style="color:var(--accent)">EduReg</span></h1>
+    <p style="color:var(--text-muted);font-size:15px;">Built with passion for smarter student management.</p>
+  </div>
+
+  <!-- PROFILE CARD -->
+  <div class="about-card">
+    <div class="about-avatar">👨‍💻</div>
+    <div class="about-info">
+      <h1>Biziwick Chikumbutso</h1>
+      <p class="about-role"><!-- SET YOUR ROLE HERE e.g. Software Developer & System Designer --></p>
+      <p class="about-uni"><!-- SET YOUR UNIVERSITY/INSTITUTION HERE --></p>
+
+      <div class="about-contacts">
+        <div class="about-contact-row">
+          <div class="contact-icon">✉️</div>
+          <!-- REPLACE href AND TEXT WITH YOUR EMAIL -->
+          <a href="mailto:your@email.com">your@email.com</a>
+        </div>
+        <div class="about-contact-row">
+          <div class="contact-icon">📞</div>
+          <!-- REPLACE WITH YOUR PHONE -->
+          <a href="tel:+265000000000">+265 000 000 000</a>
+        </div>
+      </div>
+
+      <div class="socials-row">
+        <!-- REPLACE # WITH YOUR ACTUAL LINKS -->
+        <a href="#" class="social-btn" target="_blank">
+          <span>𝕏</span> Twitter / X
+        </a>
+        <a href="#" class="social-btn" target="_blank">
+          <span>in</span> LinkedIn
+        </a>
+        <a href="#" class="social-btn" target="_blank">
+          <span>⌥</span> GitHub
+        </a>
+        <a href="#" class="social-btn" target="_blank">
+          <span>📘</span> Facebook
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- BIO -->
+  <div class="about-section">
+    <h2>About Me</h2>
+    <!-- REPLACE THIS WITH YOUR OWN BIO -->
+    <p>Hi, I'm Biziwick Chikumbutso — a passionate developer and technologist dedicated to building practical digital solutions for education. EduReg was created to solve real problems in student management: eliminating paperwork, preventing duplicate registrations, and making attendance accurate and cheat-proof through face recognition technology.</p>
+    <br/>
+    <p style="color:var(--text-dim);font-size:13px;"><!-- ADD ANY ADDITIONAL INFO HERE --></p>
+  </div>
+
+  <!-- SYSTEM INFO -->
+  <div class="about-section">
+    <h2>About EduReg</h2>
+    <p style="margin-bottom:16px;">EduReg is a face-verified student registration and attendance management system built entirely with web technologies — no app store needed. It runs in your browser and can be installed as a PWA on any device.</p>
+    <div class="feature-list">
+      <div class="feature-item">
+        <span class="feature-item-icon">🧠</span>
+        <div class="feature-item-text">
+          <strong>Face Recognition</strong>
+          <span>AI-powered face detection runs entirely in the browser</span>
+        </div>
+      </div>
+      <div class="feature-item">
+        <span class="feature-item-icon">🚫</span>
+        <div class="feature-item-text">
+          <strong>Duplicate Prevention</strong>
+          <span>Blocks students from registering twice using the same face</span>
+        </div>
+      </div>
+      <div class="feature-item">
+        <span class="feature-item-icon">📱</span>
+        <div class="feature-item-text">
+          <strong>QR Attendance</strong>
+          <span>Lecturers generate time-limited QR codes to authorise sessions</span>
+        </div>
+      </div>
+      <div class="feature-item">
+        <span class="feature-item-icon">🔒</span>
+        <div class="feature-item-text">
+          <strong>Anti-Cheat</strong>
+          <span>Face scan + QR verification prevents proxy attendance</span>
+        </div>
+      </div>
+      <div class="feature-item">
+        <span class="feature-item-icon">☁️</span>
+        <div class="feature-item-text">
+          <strong>Firebase Backend</strong>
+          <span>Real-time database — no server maintenance needed</span>
+        </div>
+      </div>
+      <div class="feature-item">
+        <span class="feature-item-icon">📲</span>
+        <div class="feature-item-text">
+          <strong>Installable PWA</strong>
+          <span>Add to home screen for a native-app-like experience</span>
+        </div>
+      </div>
+      <div class="feature-item">
+        <span class="feature-item-icon">📊</span>
+        <div class="feature-item-text">
+          <strong>Admin Dashboard</strong>
+          <span>View students, attendance records, export CSV reports</span>
+        </div>
+      </div>
+      <div class="feature-item">
+        <span class="feature-item-icon">📡</span>
+        <div class="feature-item-text">
+          <strong>Works Anywhere</strong>
+          <span>Share one link — any device with a browser can use it</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STACK -->
+  <div class="about-section">
+    <h2>Technology Stack</h2>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
+      <span class="badge">face-api.js</span>
+      <span class="badge">Firebase Firestore</span>
+      <span class="badge">jsQR</span>
+      <span class="badge">QRCode.js</span>
+      <span class="badge">HTML5 / CSS3</span>
+      <span class="badge">Vanilla JS</span>
+      <span class="badge">PWA / Service Worker</span>
+      <span class="badge">GitHub Pages</span>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+function toggleMenu(){ const b=document.getElementById('burgerBtn'),d=document.getElementById('navDrawer'); b.classList.toggle('open'); d.classList.toggle('open'); }
+window.toggleMenu=toggleMenu;
+document.getElementById('navDrawer').querySelectorAll('.nav-link').forEach(l=>l.addEventListener('click',()=>{ document.getElementById('burgerBtn').classList.remove('open'); document.getElementById('navDrawer').classList.remove('open'); }));
+</script>
+</body>
+</html>
