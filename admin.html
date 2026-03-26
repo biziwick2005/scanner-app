@@ -8,7 +8,6 @@
   <title>Admin — EduReg</title>
   <link rel="stylesheet" href="style.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
-  <!-- USE KIRITO QR CODE - MOST RELIABLE -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
@@ -67,12 +66,22 @@
       </div>
     </div>
 
-    <!-- STATS -->
+    <!-- STATS ROW - Enhanced -->
     <div class="stats-row">
       <div class="stat-card"><div class="stat-label">Students</div><div class="stat-value" id="statTotal">—</div><div class="stat-sub">registered</div></div>
       <div class="stat-card"><div class="stat-label">Attendance Today</div><div class="stat-value" id="statToday">—</div><div class="stat-sub">check-ins today</div></div>
-      <div class="stat-card"><div class="stat-label">Top Course</div><div class="stat-value" id="statCourse" style="font-size:16px;padding-top:4px;">—</div><div class="stat-sub" id="statCourseCount"></div></div>
+      <div class="stat-card"><div class="stat-label">Active Session</div><div class="stat-value" id="statActiveSession" style="font-size:16px;padding-top:4px;">—</div><div class="stat-sub" id="statActiveTime"></div></div>
       <div class="stat-card"><div class="stat-label">Latest Student</div><div class="stat-value" id="statLatest" style="font-size:16px;padding-top:4px;">—</div><div class="stat-sub">most recent</div></div>
+    </div>
+
+    <!-- Active Session Alert (Persistent) -->
+    <div id="activeSessionAlert" class="alert alert-success" style="display:none; margin-bottom:20px;">
+      <span class="alert-icon"><i class="fa-solid fa-qrcode"></i></span>
+      <div style="flex:1">
+        <h4>Active QR Session Running</h4>
+        <p id="activeSessionInfo">Session active until —</p>
+      </div>
+      <button class="btn btn-sm btn-outline" onclick="stopSession()" style="margin-left:auto;"><i class="fa-solid fa-stop"></i> End Session</button>
     </div>
 
     <!-- TABS -->
@@ -80,6 +89,7 @@
       <button class="tab-btn active" onclick="switchTab('students',this)">Students</button>
       <button class="tab-btn" onclick="switchTab('attendance',this)">Attendance Records</button>
       <button class="tab-btn" onclick="switchTab('qr',this)">Generate QR Session</button>
+      <button class="tab-btn" onclick="switchTab('sessions',this)">Session History</button>
     </div>
 
     <!-- TAB: STUDENTS -->
@@ -98,21 +108,13 @@
           <option>Year 1</option><option>Year 2</option><option>Year 3</option><option>Year 4</option><option>Year 5</option><option>Postgraduate</option>
         </select>
       </div>
-      <div class="table-wrap" id="studentsTableWrap">
-         <table>
+      <div class="table-wrap">
+        <table>
           <thead>
-             <tr>
-              <th>Student</th>
-              <th>Student ID</th>
-              <th>Course</th>
-              <th>Year</th>
-              <th>Email</th>
-              <th>Registered</th>
-              <th style="text-align:right;">Actions</th>
-             </tr>
+              <tr><th>Student</th><th>Student ID</th><th>Course</th><th>Year</th><th>Email</th><th>Registered</th><th style="text-align:right;">Actions</th></tr>
           </thead>
-          <tbody id="studentsTable"><tr><td colspan="7"><div class="empty-state"><div style="font-size:28px;">⏳</div><p>Loading…</p></div></td></tr></tbody>
-         </table>
+          <tbody id="studentsTable"><tr><td colspan="7"><div class="empty-state">Loading…</div></td></tr></tbody>
+        </table>
       </div>
       <p id="resultCount" style="font-size:12px;color:var(--text-dim);margin-top:8px;"></p>
     </div>
@@ -127,18 +129,10 @@
         <button class="btn btn-outline btn-sm" onclick="exportAttendanceCSV()"><i class="fa-solid fa-file-csv"></i> Export CSV</button>
       </div>
       <div class="table-wrap">
-         <table>
-          <thead>
-             <tr>
-              <th>Student</th>
-              <th>Module</th>
-              <th>Session</th>
-              <th>Status</th>
-              <th>Time</th>
-             </tr>
-          </thead>
-          <tbody id="attendanceTable"><tr><td colspan="5"><div class="empty-state"><div style="font-size:28px;">⏳</div><p>Loading…</p></div></td></tr></tbody>
-         </table>
+        <table>
+          <thead><tr><th>Student</th><th>Module</th><th>Session</th><th>Status</th><th>Time</th></tr></thead>
+          <tbody id="attendanceTable"><tr><td colspan="5"><div class="empty-state">Loading…</div></td></tr></tbody>
+        </table>
       </div>
       <p id="attCount" style="font-size:12px;color:var(--text-dim);margin-top:8px;"></p>
     </div>
@@ -148,7 +142,7 @@
       <div style="max-width:560px;margin:0 auto;">
         <div class="card" style="margin-bottom:20px;">
           <h3 style="font-size:17px;margin-bottom:5px;">Generate Attendance Session</h3>
-          <p style="color:var(--text-muted);font-size:13px;margin-bottom:20px;">Create a time-limited QR code. Show it on screen — students scan it to unlock attendance for that session. The QR expires automatically.</p>
+          <p style="color:var(--text-muted);font-size:13px;margin-bottom:20px;">Create a time-limited QR code. Show it on screen — students scan it to unlock attendance for that session.</p>
 
           <div class="form-grid" style="margin-bottom:16px;">
             <div class="field full">
@@ -171,10 +165,10 @@
             </div>
           </div>
 
-          <button class="btn btn-primary btn-full" onclick="generateQR()">Generate QR Code</button>
+          <button class="btn btn-primary btn-full" onclick="generateQR()" id="generateQRBtn">Generate QR Code</button>
         </div>
 
-        <!-- QR DISPLAY -->
+        <!-- QR DISPLAY - Persistent -->
         <div id="qrResult" style="display:none;">
           <div class="qr-session-card">
             <h3 id="qrSessionLabel">Session QR</h3>
@@ -192,7 +186,7 @@
 
           <!-- LIVE ATTENDANCE FEED -->
           <div class="card">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
               <h3 style="font-size:16px;">Live Attendance Feed</h3>
               <span class="badge" id="liveFeedCount">0 present</span>
             </div>
@@ -203,36 +197,44 @@
         </div>
       </div>
     </div>
+
+    <!-- TAB: SESSION HISTORY -->
+    <div class="tab-panel" id="tab-sessions">
+      <div class="card">
+        <h3 style="margin-bottom:16px;">Previous Sessions</h3>
+        <div id="sessionHistoryList" style="max-height:400px;overflow-y:auto;">
+          <div class="empty-state">No sessions recorded yet.</div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- STUDENT DETAIL MODAL -->
+<!-- MODALS (same as before) -->
 <div class="modal-backdrop" id="modalBackdrop" onclick="closeModal(event)">
   <div class="modal">
     <div class="modal-header"><h3 id="modalName">Student</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
     <div style="text-align:center;margin-bottom:16px;"><img id="modalPhoto" class="modal-photo" src="" alt="" style="display:none;"/></div>
     <div class="detail-grid" id="modalDetails"></div>
     <hr class="divider"/>
-    <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
       <button class="btn btn-danger btn-sm" onclick="deleteStudent()">Delete</button>
       <button class="btn btn-outline btn-sm" onclick="closeModal()">Close</button>
     </div>
   </div>
 </div>
 
-<!-- CONFIRM DELETE -->
 <div class="modal-backdrop" id="confirmBackdrop" onclick="closeConfirm(event)">
   <div class="modal" style="max-width:360px;">
     <div class="modal-header"><h3>Confirm Deletion</h3><button class="modal-close" onclick="closeConfirm()">✕</button></div>
-    <p style="color:var(--text-muted);font-size:14px;margin-bottom:22px;">Delete <strong id="deleteStudentName"></strong>? This cannot be undone.</p>
-    <div style="display:flex;gap:8px;justify-content:flex-end;">
+    <p>Delete <strong id="deleteStudentName"></strong>? This cannot be undone.</p>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;">
       <button class="btn btn-outline btn-sm" onclick="closeConfirm()">Cancel</button>
       <button class="btn btn-danger btn-sm" id="confirmDeleteBtn" onclick="confirmDelete()">Yes, Delete</button>
     </div>
   </div>
 </div>
 
-<!-- LIGHTBOX -->
 <div id="lightboxBackdrop" class="lightbox-backdrop" onclick="closeLightbox()">
   <button class="lightbox-close" onclick="closeLightbox()"><i class="fa-solid fa-xmark"></i></button>
   <img id="lightboxImg" class="lightbox-img" src="" alt=""/>
@@ -242,165 +244,131 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, deleteDoc, doc, orderBy, query, where, onSnapshot }
+import { getFirestore, collection, getDocs, deleteDoc, doc, orderBy, query, where, onSnapshot, addDoc, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey:            "AIzaSyCV14myKfUZm0JEym8dB6879ywbGrCO0sE",
-  authDomain:        "edureg-web.firebaseapp.com",
-  projectId:         "edureg-web",
-  storageBucket:     "edureg-web.firebasestorage.app",
+  apiKey: "AIzaSyCV14myKfUZm0JEym8dB6879ywbGrCO0sE",
+  authDomain: "edureg-web.firebaseapp.com",
+  projectId: "edureg-web",
+  storageBucket: "edureg-web.firebasestorage.app",
   messagingSenderId: "868892427867",
-  appId:             "1:868892427867:web:619d6a6591f003d0e6217e"
+  appId: "1:868892427867:web:619d6a6591f003d0e6217e"
 };
 
-const app=initializeApp(firebaseConfig);
-const db=getFirestore(app);
-window._db=db; window._col=collection; window._getDocs=getDocs;
-window._delDoc=deleteDoc; window._doc=doc; window._q=query;
-window._orderBy=orderBy; window._where=where; window._onSnapshot=onSnapshot;
-window._fbReady=true;
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+window._db = db; window._col = collection; window._getDocs = getDocs;
+window._delDoc = deleteDoc; window._doc = doc; window._q = query;
+window._orderBy = orderBy; window._where = where; window._onSnapshot = onSnapshot;
+window._addDoc = addDoc; window._ts = serverTimestamp;
+window._fbReady = true;
 </script>
 
 <script>
 const ADMIN_PASSWORD = "admin1234";
-let allStudents=[], allAttendance=[], selectedDocId=null;
-let sessionTimerInterval=null, liveUnsubscribe=null, currentSessionId=null;
-let currentQR = null;
+let allStudents = [], allAttendance = [], selectedDocId = null;
+let sessionTimerInterval = null, liveUnsubscribe = null, currentSession = null;
+let sessionHistory = [];
 
-function openLightbox(src){ if(!src)return; document.getElementById('lightboxImg').src=src; document.getElementById('lightboxBackdrop').classList.add('show'); document.body.style.overflow='hidden'; }
-function closeLightbox(){ document.getElementById('lightboxBackdrop').classList.remove('show'); document.body.style.overflow=''; }
-window.openLightbox=openLightbox; window.closeLightbox=closeLightbox;
-
-function checkPassword(){ const pw=document.getElementById('passwordInput').value; if(pw===ADMIN_PASSWORD){ sessionStorage.setItem('edureg_admin','1'); showAdmin(); } else { document.getElementById('loginError').style.display='block'; document.getElementById('passwordInput').value=''; document.getElementById('passwordInput').focus(); } }
-window.checkPassword=checkPassword;
-function showAdmin(){ document.getElementById('loginScreen').style.display='none'; document.getElementById('adminScreen').style.display='block'; loadAll(); }
-function logout(){ sessionStorage.removeItem('edureg_admin'); location.reload(); }
-window.logout=logout;
-
-function toggleMenu(){ const b=document.getElementById('burgerBtn'),d=document.getElementById('navDrawer'); b.classList.toggle('open'); d.classList.toggle('open'); }
-window.toggleMenu=toggleMenu;
-
-function switchTab(name,btn){ document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active')); btn.classList.add('active'); document.getElementById('tab-'+name).classList.add('active'); }
-window.switchTab=switchTab;
-
-async function loadAll(){
-  const wait=()=>new Promise(r=>{ if(window._fbReady)return r(); const iv=setInterval(()=>{ if(window._fbReady){clearInterval(iv);r();}},300); });
-  await wait();
-  await Promise.all([loadStudents(), loadAttendance()]);
-}
-window.loadAll=loadAll;
-
-async function loadStudents(){
-  document.getElementById('studentsTable').innerHTML='<tr><td colspan="7"><div class="empty-state"><div style="font-size:28px;"><i class="fa-solid fa-spinner fa-spin"></i></div><p>Loading…</p></div></td></tr>';
-  try {
-    const q=window._q(window._col(window._db,'students'),window._orderBy('registeredAt','desc'));
-    const snap=await window._getDocs(q);
-    allStudents=[];
-    snap.forEach(d=>allStudents.push({id:d.id,...d.data()}));
-    renderStudents(allStudents); updateStats();
-  } catch(e){ document.getElementById('studentsTable').innerHTML='<tr><td colspan="7"><div class="empty-state"><p>Error: '+e.message+'</p></div></td></tr>'; }
+// Load saved session from localStorage on page load
+function loadSavedSession() {
+  const saved = localStorage.getItem('edureg_active_session');
+  if (saved) {
+    try {
+      const session = JSON.parse(saved);
+      if (session.expires > Date.now()) {
+        currentSession = session;
+        restoreQRCode(session);
+        startSessionTimer(session.expires, session.duration);
+        startLiveFeed(session.id);
+        updateActiveSessionAlert(session);
+        document.getElementById('generateQRBtn').disabled = true;
+      } else {
+        localStorage.removeItem('edureg_active_session');
+      }
+    } catch(e) {
+      localStorage.removeItem('edureg_active_session');
+    }
+  }
 }
 
-async function loadAttendance(){
-  document.getElementById('attendanceTable').innerHTML='<tr><td colspan="5"><div class="empty-state"><div style="font-size:28px;"><i class="fa-solid fa-spinner fa-spin"></i></div><p>Loading…</p></div></td></tr>';
-  try {
-    const q=window._q(window._col(window._db,'attendance'),window._orderBy('markedAt','desc'));
-    const snap=await window._getDocs(q);
-    allAttendance=[];
-    const modules=new Set();
-    snap.forEach(d=>{ const r={id:d.id,...d.data()}; allAttendance.push(r); if(r.module)modules.add(r.module); });
-    const sel=document.getElementById('attModuleFilter');
-    sel.innerHTML='<option value="">All Modules</option>';
-    [...modules].sort().forEach(m=>{ const o=document.createElement('option'); o.value=o.textContent=m; sel.appendChild(o); });
-    renderAttendance(allAttendance);
-    updateStats();
-  } catch(e){ document.getElementById('attendanceTable').innerHTML='<tr><td colspan="5"><div class="empty-state"><p>Error: '+e.message+'</p></div></td></tr>'; }
+function saveCurrentSession() {
+  if (currentSession) {
+    localStorage.setItem('edureg_active_session', JSON.stringify(currentSession));
+  } else {
+    localStorage.removeItem('edureg_active_session');
+  }
 }
 
-function renderStudents(students){
-  const tbody=document.getElementById('studentsTable');
-  document.getElementById('resultCount').textContent=students.length?`Showing ${students.length} student${students.length!==1?'s':''}`:'';
-  if(!students.length){ tbody.innerHTML='<tr><td colspan="7"><div class="empty-state"><div style="font-size:28px;"><i class="fa-solid fa-user-slash"></i></div><p>No students found.</p></div></td></tr>'; return; }
-  tbody.innerHTML=students.map(s=>{
-    const avatar=s.photoURL?`<img class="td-avatar" src="${s.photoURL}" alt="${esc(s.fullName)}" style="object-fit:cover;cursor:zoom-in;" onclick="openLightbox('${s.photoURL}')" title="View photo"/>`:`<div class="td-avatar" style="display:flex;align-items:center;justify-content:center;color:var(--text-dim);"><i class="fa-solid fa-user"></i></div>`;
-    const date=s.registeredAt?.toDate?s.registeredAt.toDate().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';
-    return `<tr>
-      <td class="col-name" data-label="Student"><div class="td-name">${avatar}<div><div class="td-name-text">${esc(s.fullName)}</div><div class="td-id">${esc(s.studentId)}</div></div></div></td>
-      <td class="col-id" data-label="ID"><span class="td-id">${esc(s.studentId)}</span></td>
-      <td class="col-course" data-label="Course"><span class="badge" style="white-space:normal;word-break:break-word;max-width:160px;">${esc(s.course)}</span></td>
-      <td class="col-year" data-label="Year" style="color:var(--text-muted);font-size:12px;">${esc(s.year)}</td>
-      <td class="col-email" data-label="Email" style="color:var(--text-muted);font-size:12px;word-break:break-all;">${esc(s.email)}</td>
-      <td class="col-date" data-label="Date" style="color:var(--text-dim);font-size:11px;">${date}</td>
-      <td class="col-actions"><button class="btn btn-outline btn-sm" onclick="openModal('${s.id}')"><i class="fa-solid fa-eye fa-xs"></i> View</button></td>
-     </tr>`;
-  }).join('');
-}
-
-function renderAttendance(records){
-  const tbody=document.getElementById('attendanceTable');
-  document.getElementById('attCount').textContent=records.length?`${records.length} record${records.length!==1?'s':''}`:'';
-  if(!records.length){ tbody.innerHTML='<tr><td colspan="5"><div class="empty-state"><div style="font-size:28px;"><i class="fa-solid fa-clipboard"></i></div><p>No attendance records yet.</p></div></td></tr>'; return; }
-  tbody.innerHTML=records.map(r=>{
-    const avatar=r.photoURL?`<img class="td-avatar" src="${r.photoURL}" alt="${esc(r.fullName)}" style="object-fit:cover;cursor:zoom-in;" onclick="openLightbox('${r.photoURL}')" title="View photo"/>`:`<div class="td-avatar" style="display:flex;align-items:center;justify-content:center;color:var(--text-dim);"><i class="fa-solid fa-user"></i></div>`;
-    const time=r.markedAt?.toDate?r.markedAt.toDate().toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'—';
-    return `<tr>
-      <td data-label="Student"><div class="td-name">${avatar}<div><div class="td-name-text">${esc(r.fullName)}</div><div class="td-id">${esc(r.studentId)}</div></div></div></td>
-      <td data-label="Module"><span class="badge badge-info" style="white-space:normal;word-break:break-word;">${esc(r.module)}</span></td>
-      <td data-label="Session" style="color:var(--text-muted);font-size:12px;word-break:break-word;max-width:140px;">${esc(r.sessionLabel||r.sessionId||'—')}</td>
-      <td data-label="Status"><span class="badge">${esc(r.status||'present')}</span></td>
-      <td data-label="Time" style="color:var(--text-dim);font-size:11px;font-family:monospace;">${time}</td>
-     </tr>`;
-  }).join('');
-}
-
-function filterStudents(){
-  const q=document.getElementById('searchInput').value.toLowerCase();
-  const crs=document.getElementById('courseFilter').value;
-  const yr=document.getElementById('yearFilter').value;
-  renderStudents(allStudents.filter(s=>{ const m=!q||[s.fullName,s.studentId,s.course,s.email,s.phone].some(v=>v&&v.toLowerCase().includes(q)); return m&&(!crs||s.course===crs)&&(!yr||s.year===yr); }));
-}
-window.filterStudents=filterStudents;
-
-function filterAttendance(){
-  const q=document.getElementById('attSearchInput').value.toLowerCase();
-  const mod=document.getElementById('attModuleFilter').value;
-  renderAttendance(allAttendance.filter(r=>{ const m=!q||[r.fullName,r.studentId,r.module,r.sessionLabel].some(v=>v&&v.toLowerCase().includes(q)); return m&&(!mod||r.module===mod); }));
-}
-window.filterAttendance=filterAttendance;
-
-function updateStats(){
-  document.getElementById('statTotal').textContent=allStudents.length;
-  const today=new Date().toDateString();
-  const todayCount=allAttendance.filter(r=>r.markedAt?.toDate&&r.markedAt.toDate().toDateString()===today).length;
-  document.getElementById('statToday').textContent=todayCount;
-  const cc={}; allStudents.forEach(s=>{if(s.course)cc[s.course]=(cc[s.course]||0)+1;});
-  const top=Object.entries(cc).sort((a,b)=>b[1]-a[1])[0];
-  if(top){ document.getElementById('statCourse').textContent=top[0].split(' ').slice(0,2).join(' '); document.getElementById('statCourseCount').textContent=`${top[1]} students`; }
-  if(allStudents[0]) document.getElementById('statLatest').textContent=allStudents[0].fullName?.split(' ')[0]||'—';
-}
-
-// WORKING QR GENERATION
-function generateQR() {
-  const label = document.getElementById('sessionLabel').value.trim() || 'Class Session';
-  const duration = parseInt(document.getElementById('sessionDuration').value) || 10;
-  const expires = Date.now() + (duration * 60 * 1000);
-  currentSessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
-  const payload = JSON.stringify({
-    type: 'edureg_session',
-    id: currentSessionId,
-    label: label,
-    expires: expires
-  });
-  
+function restoreQRCode(session) {
   document.getElementById('qrResult').style.display = 'block';
-  document.getElementById('qrSessionLabel').textContent = label;
-  document.getElementById('qrSessionInfo').textContent = `Valid for ${duration} min · Session ID: ${currentSessionId.slice(-8)}`;
+  document.getElementById('qrSessionLabel').textContent = session.label;
+  document.getElementById('qrSessionInfo').textContent = `Valid for ${session.duration} min · Session ID: ${session.id.slice(-8)}`;
   
   const container = document.getElementById('qrContainer');
   container.innerHTML = '';
   
-  // Create QR code using the loaded QRCode library
+  try {
+    new QRCode(container, {
+      text: session.payload,
+      width: 200,
+      height: 200,
+      colorDark: "#000000",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  } catch(e) {
+    console.error('QR restore error:', e);
+  }
+}
+
+function updateActiveSessionAlert(session) {
+  const alert = document.getElementById('activeSessionAlert');
+  const remaining = Math.max(0, Math.floor((session.expires - Date.now()) / 60000));
+  document.getElementById('activeSessionInfo').innerHTML = `<strong>${session.label}</strong> · Expires in ${remaining} min · ID: ${session.id.slice(-8)}`;
+  alert.style.display = 'flex';
+  document.getElementById('statActiveSession').textContent = session.label.substring(0, 20);
+  document.getElementById('statActiveTime').textContent = `${remaining} min remaining`;
+}
+
+function clearActiveSessionAlert() {
+  document.getElementById('activeSessionAlert').style.display = 'none';
+  document.getElementById('statActiveSession').textContent = '—';
+  document.getElementById('statActiveTime').textContent = 'no active session';
+}
+
+function generateQR() {
+  const label = document.getElementById('sessionLabel').value.trim() || 'Class Session';
+  const duration = parseInt(document.getElementById('sessionDuration').value) || 10;
+  const expires = Date.now() + (duration * 60 * 1000);
+  const sessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+  const payload = JSON.stringify({
+    type: 'edureg_session',
+    id: sessionId,
+    label: label,
+    expires: expires
+  });
+  
+  currentSession = {
+    id: sessionId,
+    label: label,
+    duration: duration,
+    expires: expires,
+    payload: payload,
+    createdAt: Date.now()
+  };
+  
+  saveCurrentSession();
+  
+  document.getElementById('qrResult').style.display = 'block';
+  document.getElementById('qrSessionLabel').textContent = label;
+  document.getElementById('qrSessionInfo').textContent = `Valid for ${duration} min · Session ID: ${sessionId.slice(-8)}`;
+  document.getElementById('generateQRBtn').disabled = true;
+  
+  const container = document.getElementById('qrContainer');
+  container.innerHTML = '';
+  
   try {
     new QRCode(container, {
       text: payload,
@@ -410,7 +378,7 @@ function generateQR() {
       colorLight: "#ffffff",
       correctLevel: QRCode.CorrectLevel.M
     });
-    toast('QR code generated!', 'success');
+    toast('QR code generated! Session will persist after refresh', 'success');
   } catch(e) {
     console.error('QR error:', e);
     container.innerHTML = '<div style="color:var(--danger);text-align:center;">⚠️ QR Error</div>';
@@ -418,7 +386,8 @@ function generateQR() {
   }
   
   startSessionTimer(expires, duration);
-  startLiveFeed(currentSessionId);
+  startLiveFeed(sessionId);
+  updateActiveSessionAlert(currentSession);
 }
 
 function startSessionTimer(expires, totalMin) {
@@ -433,6 +402,14 @@ function startSessionTimer(expires, totalMin) {
       el.textContent = '0:00';
       el.classList.add('warn');
       toast('Session expired.', 'warn');
+      // Auto-cleanup expired session
+      if (currentSession) {
+        saveSessionToHistory(currentSession);
+        currentSession = null;
+        saveCurrentSession();
+        clearActiveSessionAlert();
+        document.getElementById('generateQRBtn').disabled = false;
+      }
       return;
     }
     const m = Math.floor(left / 60000);
@@ -441,10 +418,70 @@ function startSessionTimer(expires, totalMin) {
     if (left < 60000) {
       el.classList.add('warn');
     }
+    
+    // Update active session alert timer
+    if (currentSession) {
+      const remaining = Math.floor(left / 60000);
+      document.getElementById('activeSessionInfo').innerHTML = `<strong>${currentSession.label}</strong> · Expires in ${remaining} min · ID: ${currentSession.id.slice(-8)}`;
+      document.getElementById('statActiveTime').textContent = `${remaining} min remaining`;
+    }
   }
   
   updateTimer();
   sessionTimerInterval = setInterval(updateTimer, 1000);
+}
+
+async function saveSessionToHistory(session) {
+  try {
+    const attendanceCount = allAttendance.filter(a => a.sessionId === session.id).length;
+    await window._addDoc(window._col(window._db, 'sessions'), {
+      sessionId: session.id,
+      label: session.label,
+      duration: session.duration,
+      createdAt: new Date(session.createdAt),
+      expiredAt: new Date(session.expires),
+      attendanceCount: attendanceCount,
+      status: 'expired'
+    });
+    loadSessionHistory();
+  } catch(e) {
+    console.error('Failed to save session history:', e);
+  }
+}
+
+async function loadSessionHistory() {
+  try {
+    const q = window._q(window._col(window._db, 'sessions'), window._orderBy('createdAt', 'desc'));
+    const snap = await window._getDocs(q);
+    const history = [];
+    snap.forEach(d => history.push({ id: d.id, ...d.data() }));
+    
+    const container = document.getElementById('sessionHistoryList');
+    if (!history.length) {
+      container.innerHTML = '<div class="empty-state">No sessions recorded yet.</div>';
+      return;
+    }
+    
+    container.innerHTML = history.map(s => {
+      const date = s.createdAt?.toDate ? s.createdAt.toDate().toLocaleString() : '—';
+      return `
+        <div class="session-history-item" style="padding:12px; border-bottom:1px solid var(--border);">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div>
+              <strong style="color:var(--accent);">${escapeHtml(s.label)}</strong>
+              <div style="font-size:12px; color:var(--text-muted);">ID: ${s.sessionId?.slice(-8) || '—'}</div>
+            </div>
+            <div style="text-align:right;">
+              <span class="badge">${s.attendanceCount || 0} students</span>
+              <div style="font-size:11px; color:var(--text-dim);">${date}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch(e) {
+    console.error('Load history error:', e);
+  }
 }
 
 function startLiveFeed(sessionId) {
@@ -462,9 +499,9 @@ function startLiveFeed(sessionId) {
     feed.innerHTML = records.map(r => {
       const avatar = r.photoURL
         ? `<img class="att-record-avatar" src="${r.photoURL}" style="object-fit:cover;cursor:zoom-in;" onclick="openLightbox('${r.photoURL}')" alt=""/>`
-        : `<div class="att-record-avatar" style="display:flex;align-items:center;justify-content:center;"><i class="fa-solid fa-user"></i></div>`;
+        : `<div class="att-record-avatar"><i class="fa-solid fa-user"></i></div>`;
       const time = r.markedAt?.toDate ? r.markedAt.toDate().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : 'now';
-      return `<div class="att-record">${avatar}<div><div class="att-record-name">${esc(r.fullName)}</div><div class="att-record-meta">${esc(r.module)} · ${esc(r.studentId)}</div></div><div class="att-record-time">${time}</div></div>`;
+      return `<div class="att-record">${avatar}<div><div class="att-record-name">${escapeHtml(r.fullName)}</div><div class="att-record-meta">${escapeHtml(r.module)} · ${escapeHtml(r.studentId)}</div></div><div class="att-record-time">${time}</div></div>`;
     }).join('');
   });
 }
@@ -472,20 +509,148 @@ function startLiveFeed(sessionId) {
 window.regenerateQR = function() {
   if (liveUnsubscribe) liveUnsubscribe();
   if (sessionTimerInterval) clearInterval(sessionTimerInterval);
+  if (currentSession) {
+    saveSessionToHistory(currentSession);
+  }
   document.getElementById('qrResult').style.display = 'none';
   document.getElementById('qrContainer').innerHTML = '';
+  document.getElementById('generateQRBtn').disabled = false;
+  currentSession = null;
+  saveCurrentSession();
+  clearActiveSessionAlert();
   generateQR();
 };
 
 window.stopSession = function() {
   if (liveUnsubscribe) liveUnsubscribe();
   if (sessionTimerInterval) clearInterval(sessionTimerInterval);
+  if (currentSession) {
+    saveSessionToHistory(currentSession);
+    toast(`Session "${currentSession.label}" ended`, 'warn');
+  }
   document.getElementById('qrResult').style.display = 'none';
   document.getElementById('qrContainer').innerHTML = '';
-  toast('Session stopped.', 'warn');
+  document.getElementById('generateQRBtn').disabled = false;
+  currentSession = null;
+  saveCurrentSession();
+  clearActiveSessionAlert();
 };
 
-window.openModal = function(id) {
+// Rest of the functions (loadAll, loadStudents, etc.) remain the same as before
+async function loadAll() {
+  const wait = () => new Promise(r => { if (window._fbReady) return r(); const iv = setInterval(() => { if (window._fbReady) { clearInterval(iv); r(); } }, 300); });
+  await wait();
+  await Promise.all([loadStudents(), loadAttendance(), loadSessionHistory()]);
+}
+
+async function loadStudents() {
+  try {
+    const q = window._q(window._col(window._db, 'students'), window._orderBy('registeredAt', 'desc'));
+    const snap = await window._getDocs(q);
+    allStudents = [];
+    snap.forEach(d => allStudents.push({ id: d.id, ...d.data() }));
+    renderStudents(allStudents);
+    updateStats();
+  } catch(e) { console.error(e); }
+}
+
+async function loadAttendance() {
+  try {
+    const q = window._q(window._col(window._db, 'attendance'), window._orderBy('markedAt', 'desc'));
+    const snap = await window._getDocs(q);
+    allAttendance = [];
+    const modules = new Set();
+    snap.forEach(d => {
+      const r = { id: d.id, ...d.data() };
+      allAttendance.push(r);
+      if (r.module) modules.add(r.module);
+    });
+    const sel = document.getElementById('attModuleFilter');
+    sel.innerHTML = '<option value="">All Modules</option>';
+    [...modules].sort().forEach(m => {
+      const o = document.createElement('option');
+      o.value = o.textContent = m;
+      sel.appendChild(o);
+    });
+    renderAttendance(allAttendance);
+    updateStats();
+  } catch(e) { console.error(e); }
+}
+
+function renderStudents(students) {
+  const tbody = document.getElementById('studentsTable');
+  document.getElementById('resultCount').textContent = students.length ? `Showing ${students.length} student${students.length !== 1 ? 's' : ''}` : '';
+  if (!students.length) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state">No students found.</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = students.map(s => {
+    const avatar = s.photoURL ? `<img class="td-avatar" src="${s.photoURL}" style="cursor:zoom-in;" onclick="openLightbox('${s.photoURL}')"/>` : `<div class="td-avatar"><i class="fa-solid fa-user"></i></div>`;
+    const date = s.registeredAt?.toDate ? s.registeredAt.toDate().toLocaleDateString('en-GB') : '—';
+    return `<tr>
+      <td><div class="td-name">${avatar}<div><div class="td-name-text">${escapeHtml(s.fullName)}</div><div class="td-id">${escapeHtml(s.studentId)}</div></div></div></td>
+      <td>${escapeHtml(s.studentId)}</td>
+      <td><span class="badge">${escapeHtml(s.course)}</span></td>
+      <td>${escapeHtml(s.year)}</td>
+      <td>${escapeHtml(s.email)}</td>
+      <td>${date}</td>
+      <td><button class="btn btn-outline btn-sm" onclick="openModal('${s.id}')"><i class="fa-solid fa-eye"></i> View</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderAttendance(records) {
+  const tbody = document.getElementById('attendanceTable');
+  document.getElementById('attCount').textContent = records.length ? `${records.length} record${records.length !== 1 ? 's' : ''}` : '';
+  if (!records.length) {
+    tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state">No attendance records yet.</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = records.map(r => {
+    const avatar = r.photoURL ? `<img class="td-avatar" src="${r.photoURL}" style="cursor:zoom-in;" onclick="openLightbox('${r.photoURL}')"/>` : `<div class="td-avatar"><i class="fa-solid fa-user"></i></div>`;
+    const time = r.markedAt?.toDate ? r.markedAt.toDate().toLocaleString() : '—';
+    return `<tr>
+      <td><div class="td-name">${avatar}<div><div class="td-name-text">${escapeHtml(r.fullName)}</div><div class="td-id">${escapeHtml(r.studentId)}</div></div></div></td>
+      <td><span class="badge badge-info">${escapeHtml(r.module)}</span></td>
+      <td>${escapeHtml(r.sessionLabel || r.sessionId || '—')}</td>
+      <td><span class="badge">present</span></td>
+      <td>${time}</td>
+    </tr>`;
+  }).join('');
+}
+
+function filterStudents() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const crs = document.getElementById('courseFilter').value;
+  const yr = document.getElementById('yearFilter').value;
+  renderStudents(allStudents.filter(s => {
+    const match = !q || [s.fullName, s.studentId, s.course, s.email].some(v => v && v.toLowerCase().includes(q));
+    return match && (!crs || s.course === crs) && (!yr || s.year === yr);
+  }));
+}
+
+function filterAttendance() {
+  const q = document.getElementById('attSearchInput').value.toLowerCase();
+  const mod = document.getElementById('attModuleFilter').value;
+  renderAttendance(allAttendance.filter(r => {
+    const match = !q || [r.fullName, r.studentId, r.module, r.sessionLabel].some(v => v && v.toLowerCase().includes(q));
+    return match && (!mod || r.module === mod);
+  }));
+}
+
+function updateStats() {
+  document.getElementById('statTotal').textContent = allStudents.length;
+  const today = new Date().toDateString();
+  const todayCount = allAttendance.filter(r => r.markedAt?.toDate && r.markedAt.toDate().toDateString() === today).length;
+  document.getElementById('statToday').textContent = todayCount;
+  const cc = {};
+  allStudents.forEach(s => { if (s.course) cc[s.course] = (cc[s.course] || 0) + 1; });
+  const top = Object.entries(cc).sort((a, b) => b[1] - a[1])[0];
+  if (top) document.getElementById('statCourse').textContent = top[0];
+  if (allStudents[0]) document.getElementById('statLatest').textContent = allStudents[0].fullName?.split(' ')[0] || '—';
+}
+
+function openModal(id) {
   const s = allStudents.find(x => x.id === id);
   if (!s) return;
   selectedDocId = id;
@@ -494,47 +659,29 @@ window.openModal = function(id) {
   if (s.photoURL) {
     photo.src = s.photoURL;
     photo.style.display = 'block';
-    photo.style.cursor = 'zoom-in';
     photo.onclick = () => openLightbox(s.photoURL);
   } else {
     photo.style.display = 'none';
   }
   document.getElementById('deleteStudentName').textContent = s.fullName;
-  const date = s.registeredAt?.toDate ? s.registeredAt.toDate().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }) : '—';
-  const dob = s.dob ? new Date(s.dob).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }) : '—';
+  const date = s.registeredAt?.toDate ? s.registeredAt.toDate().toLocaleDateString() : '—';
+  const dob = s.dob ? new Date(s.dob).toLocaleDateString() : '—';
   document.getElementById('modalDetails').innerHTML = [
-    ['Student ID', s.studentId],
-    ['Course', s.course],
-    ['Year of Study', s.year],
-    ['Date of Birth', dob],
-    ['Email', s.email],
-    ['Phone', s.phone],
-    ['Registered', date]
-  ].map(([l, v]) => `<div class="detail-item"><label>${l}</label><p style="word-break:break-word;">${esc(v || '—')}</p></div>`).join('');
+    ['Student ID', s.studentId], ['Course', s.course], ['Year', s.year],
+    ['Date of Birth', dob], ['Email', s.email], ['Phone', s.phone], ['Registered', date]
+  ].map(([l, v]) => `<div class="detail-item"><label>${l}</label><p>${escapeHtml(v || '—')}</p></div>`).join('');
   document.getElementById('modalBackdrop').classList.add('show');
-};
+}
 
-window.closeModal = function(e) {
-  if (e && e.target !== document.getElementById('modalBackdrop')) return;
-  document.getElementById('modalBackdrop').classList.remove('show');
-  selectedDocId = null;
-};
+function closeModal(e) { if (e && e.target !== document.getElementById('modalBackdrop')) return; document.getElementById('modalBackdrop').classList.remove('show'); selectedDocId = null; }
+function deleteStudent() { document.getElementById('modalBackdrop').classList.remove('show'); document.getElementById('confirmBackdrop').classList.add('show'); }
+function closeConfirm(e) { if (e && e.target !== document.getElementById('confirmBackdrop')) return; document.getElementById('confirmBackdrop').classList.remove('show'); }
 
-window.deleteStudent = function() {
-  document.getElementById('modalBackdrop').classList.remove('show');
-  document.getElementById('confirmBackdrop').classList.add('show');
-};
-
-window.closeConfirm = function(e) {
-  if (e && e.target !== document.getElementById('confirmBackdrop')) return;
-  document.getElementById('confirmBackdrop').classList.remove('show');
-};
-
-window.confirmDelete = async function() {
+async function confirmDelete() {
   if (!selectedDocId) return;
   const btn = document.getElementById('confirmDeleteBtn');
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner spinner-light"></span>';
+  btn.innerHTML = '<span class="spinner"></span>';
   try {
     await window._delDoc(window._doc(window._db, 'students', selectedDocId));
     allStudents = allStudents.filter(s => s.id !== selectedDocId);
@@ -542,42 +689,86 @@ window.confirmDelete = async function() {
     updateStats();
     document.getElementById('confirmBackdrop').classList.remove('show');
     toast('Student deleted.', 'warn');
-  } catch (e) {
-    toast('Delete failed: ' + e.message, 'error');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Yes, Delete';
-    selectedDocId = null;
-  }
-};
+  } catch (e) { toast('Delete failed', 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Yes, Delete'; selectedDocId = null; }
+}
 
-window.exportCSV = function() {
+function exportCSV() {
   if (!allStudents.length) { toast('No students.', 'warn'); return; }
-  const h = ['Full Name', 'Student ID', 'Course', 'Year', 'Date of Birth', 'Email', 'Phone', 'Registered'];
+  const headers = ['Full Name', 'Student ID', 'Course', 'Year', 'Date of Birth', 'Email', 'Phone', 'Registered'];
   const rows = allStudents.map(s => {
-    const date = s.registeredAt?.toDate ? s.registeredAt.toDate().toLocaleDateString('en-GB') : '';
+    const date = s.registeredAt?.toDate ? s.registeredAt.toDate().toLocaleDateString() : '';
     return [s.fullName, s.studentId, s.course, s.year, s.dob, s.email, s.phone, date].map(v => `"${(v || '').replace(/"/g, '""')}"`).join(',');
   });
-  dl([h.join(','), ...rows].join('\n'), `students_${new Date().toISOString().slice(0, 10)}.csv`);
-  toast('Students CSV exported!', 'success');
-};
-
-window.exportAttendanceCSV = function() {
-  if (!allAttendance.length) { toast('No records.', 'warn'); return; }
-  const h = ['Full Name', 'Student ID', 'Course', 'Year', 'Module', 'Session', 'Status', 'Time'];
-  const rows = allAttendance.map(r => {
-    const time = r.markedAt?.toDate ? r.markedAt.toDate().toLocaleString('en-GB') : '';
-    return [r.fullName, r.studentId, r.course, r.year, r.module, r.sessionLabel || r.sessionId, r.status, time].map(v => `"${(v || '').replace(/"/g, '""')}"`).join(',');
-  });
-  dl([h.join(','), ...rows].join('\n'), `attendance_${new Date().toISOString().slice(0, 10)}.csv`);
-  toast('Attendance CSV exported!', 'success');
-};
-
-function dl(csv, name) {
+  const csv = [headers.join(','), ...rows].join('\n');
   const a = document.createElement('a');
   a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-  a.download = name;
+  a.download = `students_${new Date().toISOString().slice(0, 10)}.csv`;
   a.click();
+  toast('Students CSV exported!', 'success');
+}
+
+function exportAttendanceCSV() {
+  if (!allAttendance.length) { toast('No records.', 'warn'); return; }
+  const headers = ['Full Name', 'Student ID', 'Course', 'Year', 'Module', 'Session', 'Status', 'Time'];
+  const rows = allAttendance.map(r => {
+    const time = r.markedAt?.toDate ? r.markedAt.toDate().toLocaleString() : '';
+    return [r.fullName, r.studentId, r.course, r.year, r.module, r.sessionLabel || r.sessionId, r.status, time].map(v => `"${(v || '').replace(/"/g, '""')}"`).join(',');
+  });
+  const csv = [headers.join(','), ...rows].join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = `attendance_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  toast('Attendance CSV exported!', 'success');
+}
+
+function checkPassword() {
+  const pw = document.getElementById('passwordInput').value;
+  if (pw === ADMIN_PASSWORD) {
+    sessionStorage.setItem('edureg_admin', '1');
+    showAdmin();
+  } else {
+    document.getElementById('loginError').style.display = 'block';
+    document.getElementById('passwordInput').value = '';
+  }
+}
+
+function showAdmin() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('adminScreen').style.display = 'block';
+  loadAll();
+  loadSavedSession();
+}
+
+function logout() {
+  sessionStorage.removeItem('edureg_admin');
+  location.reload();
+}
+
+function toggleMenu() {
+  document.getElementById('burgerBtn').classList.toggle('open');
+  document.getElementById('navDrawer').classList.toggle('open');
+}
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+function openLightbox(src) { if (!src) return; document.getElementById('lightboxImg').src = src; document.getElementById('lightboxBackdrop').classList.add('show'); document.body.style.overflow = 'hidden'; }
+function closeLightbox() { document.getElementById('lightboxBackdrop').classList.remove('show'); document.body.style.overflow = ''; }
+
+function escapeHtml(str) { return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function toast(msg, type = 'success') {
+  const icons = { success: '✓', error: '✕', warn: '!' };
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span>${icons[type] || 'i'}</span>${msg}`;
+  document.getElementById('toastContainer').appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3500);
 }
 
 window.addEventListener('load', () => {
@@ -586,23 +777,24 @@ window.addEventListener('load', () => {
   if (sessionStorage.getItem('edureg_admin') === '1') showAdmin();
 });
 
-function esc(s) {
-  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-function toast(msg, type = 'success') {
-  const icons = { success: '✓', error: '✕', warn: '!' };
-  const t = document.createElement('div');
-  t.className = `toast ${type}`;
-  t.innerHTML = `<span>${icons[type] || 'i'}</span>${msg}`;
-  document.getElementById('toastContainer').appendChild(t);
-  setTimeout(() => {
-    t.style.opacity = '0';
-    setTimeout(() => t.remove(), 300);
-  }, 3500);
-}
-
 window.generateQR = generateQR;
+window.regenerateQR = regenerateQR;
+window.stopSession = stopSession;
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.deleteStudent = deleteStudent;
+window.closeConfirm = closeConfirm;
+window.confirmDelete = confirmDelete;
+window.exportCSV = exportCSV;
+window.exportAttendanceCSV = exportAttendanceCSV;
+window.filterStudents = filterStudents;
+window.filterAttendance = filterAttendance;
+window.switchTab = switchTab;
+window.toggleMenu = toggleMenu;
+window.checkPassword = checkPassword;
+window.logout = logout;
+window.openLightbox = openLightbox;
+window.closeLightbox = closeLightbox;
 </script>
 </body>
 </html>
