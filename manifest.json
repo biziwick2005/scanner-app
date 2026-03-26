@@ -1,12 +1,12 @@
 {
-  "name": "EduReg — Student Registration",
+  "name": "EduReg",
   "short_name": "EduReg",
   "description": "Face-verified student registration and attendance system",
-  "start_url": "/index.html",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#0a0f0d",
   "theme_color": "#3ddc6e",
-  "orientation": "portrait-primary",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "icon-192.png",
@@ -19,23 +19,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "Register",
-      "url": "/index.html",
-      "description": "Register a new student"
-    },
-    {
-      "name": "Attendance",
-      "url": "/attendance.html",
-      "description": "Mark attendance"
-    },
-    {
-      "name": "Admin",
-      "url": "/admin.html",
-      "description": "Admin panel"
     }
   ]
 }
