@@ -147,18 +147,42 @@
   </div>
 </div>
 
-<!-- PWA INSTALL BANNER -->
-<div class="pwa-banner" id="pwaBanner">
-  <div class="pwa-banner-icon"><i class="fa-solid fa-graduation-cap" style="color:#0a0f0d;font-size:20px;"></i></div>
-  <div class="pwa-banner-text">
-    <strong>Install EduReg</strong>
-    <span>Add to home screen for quick access</span>
-  </div>
-  <div class="pwa-banner-actions">
-    <button class="btn btn-outline btn-sm pwa-dismiss" onclick="dismissPWA()">Not now</button>
-    <button class="btn btn-primary btn-sm" onclick="installPWA()">Install</button>
+<!-- PWA INSTALL MODAL -->
+<div class="pwa-modal-backdrop" id="pwaModalBackdrop">
+  <div class="pwa-modal" id="pwaModal">
+    <button class="pwa-modal-close" onclick="closePWAModal()"><i class="fa-solid fa-xmark"></i></button>
+    <div class="pwa-modal-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+    <h2 class="pwa-modal-title">Install EduReg</h2>
+    <p class="pwa-modal-desc">Add EduReg to your home screen for faster access — works like a native app, no app store needed.</p>
+    <!-- Android / Desktop Chrome -->
+    <div id="pwaInstallBtn" style="display:none;">
+      <button class="btn btn-primary btn-full" onclick="triggerInstall()"><i class="fa-solid fa-download"></i> Install App</button>
+    </div>
+    <!-- iOS instructions -->
+    <div id="pwaIOSInstructions" style="display:none;">
+      <div class="pwa-steps-list">
+        <div class="pwa-step-row"><span class="pwa-step-num">1</span><span>Tap the <strong>Share</strong> button <i class="fa-solid fa-arrow-up-from-bracket" style="color:var(--accent)"></i> at the bottom of Safari</span></div>
+        <div class="pwa-step-row"><span class="pwa-step-num">2</span><span>Scroll down and tap <strong>"Add to Home Screen"</strong></span></div>
+        <div class="pwa-step-row"><span class="pwa-step-num">3</span><span>Tap <strong>"Add"</strong> — EduReg will appear on your home screen</span></div>
+      </div>
+    </div>
+    <!-- Generic fallback -->
+    <div id="pwaGenericInstructions" style="display:none;">
+      <div class="pwa-steps-list">
+        <div class="pwa-step-row"><span class="pwa-step-num">1</span><span>Open this page in <strong>Chrome</strong> or <strong>Edge</strong></span></div>
+        <div class="pwa-step-row"><span class="pwa-step-num">2</span><span>Tap the browser menu <i class="fa-solid fa-ellipsis-vertical" style="color:var(--accent)"></i></span></div>
+        <div class="pwa-step-row"><span class="pwa-step-num">3</span><span>Select <strong>"Add to Home Screen"</strong> or <strong>"Install App"</strong></span></div>
+      </div>
+    </div>
+    <button class="btn btn-outline btn-full" style="margin-top:10px;" onclick="closePWAModal()">Maybe later</button>
   </div>
 </div>
+
+<!-- PWA FLOATING INSTALL BUTTON -->
+<button class="pwa-fab" id="pwaFab" onclick="openPWAModal()" title="Install App" style="display:none;">
+  <i class="fa-solid fa-download"></i>
+  <span>Install</span>
+</button>
 
 <!-- LIGHTBOX -->
 <div id="lightboxBackdrop" class="lightbox-backdrop" onclick="closeLightbox()">
@@ -194,18 +218,103 @@ window._getDocs = getDocs; window._ts = serverTimestamp; window._fbReady = true;
 <script>
 // ── PWA ─────────────────────────────────────────
 let deferredPrompt = null;
+let isInstalled = false;
+
+// Register service worker
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW:', e));
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => console.log('SW registered:', reg.scope))
+      .catch(e => console.warn('SW failed:', e));
+  });
 }
+
+// Check if already installed
+if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+  isInstalled = true;
+}
+
+// Catch Chrome/Android/Desktop install prompt
 window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault(); deferredPrompt = e;
-  if (!localStorage.getItem('pwa_dismissed')) {
-    setTimeout(() => document.getElementById('pwaBanner').classList.add('show'), 2000);
+  e.preventDefault();
+  deferredPrompt = e;
+  if (!isInstalled && !sessionStorage.getItem('pwa_dismissed')) {
+    setTimeout(() => showPWAFab(), 1500);
+    setTimeout(() => openPWAModal(), 3000);
   }
 });
-function installPWA() { if (!deferredPrompt) return; deferredPrompt.prompt(); deferredPrompt.userChoice.then(() => { deferredPrompt=null; document.getElementById('pwaBanner').classList.remove('show'); }); }
-function dismissPWA() { document.getElementById('pwaBanner').classList.remove('show'); localStorage.setItem('pwa_dismissed','1'); }
-window.installPWA = installPWA; window.dismissPWA = dismissPWA;
+
+// Hide fab when installed
+window.addEventListener('appinstalled', () => {
+  isInstalled = true;
+  hidePWAFab();
+  closePWAModal();
+  toast('EduReg installed successfully!', 'success');
+});
+
+function showPWAFab() {
+  if (isInstalled) return;
+  document.getElementById('pwaFab').style.display = 'flex';
+}
+function hidePWAFab() {
+  document.getElementById('pwaFab').style.display = 'none';
+}
+
+function openPWAModal() {
+  if (isInstalled) return;
+  const backdrop = document.getElementById('pwaModalBackdrop');
+  backdrop.classList.add('show');
+  document.body.style.overflow = 'hidden';
+
+  // Show the right instructions based on platform
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+  document.getElementById('pwaInstallBtn').style.display = 'none';
+  document.getElementById('pwaIOSInstructions').style.display = 'none';
+  document.getElementById('pwaGenericInstructions').style.display = 'none';
+
+  if (deferredPrompt) {
+    document.getElementById('pwaInstallBtn').style.display = 'block';
+  } else if (isIOS && isSafari) {
+    document.getElementById('pwaIOSInstructions').style.display = 'block';
+  } else {
+    document.getElementById('pwaGenericInstructions').style.display = 'block';
+  }
+}
+
+function closePWAModal() {
+  document.getElementById('pwaModalBackdrop').classList.remove('show');
+  document.body.style.overflow = '';
+  sessionStorage.setItem('pwa_dismissed', '1');
+  showPWAFab();
+}
+
+async function triggerInstall() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const result = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  closePWAModal();
+  if (result.outcome === 'accepted') {
+    hidePWAFab();
+    toast('Installing EduReg…', 'success');
+  }
+}
+
+window.openPWAModal = openPWAModal;
+window.closePWAModal = closePWAModal;
+window.triggerInstall = triggerInstall;
+
+// Show fab on load if not installed and not dismissed
+window.addEventListener('load', () => {
+  if (!isInstalled) {
+    // Show fab after 2s always (user can manually install)
+    setTimeout(() => {
+      if (!sessionStorage.getItem('pwa_dismissed')) showPWAFab();
+    }, 2000);
+  }
+});
 
 // ── NAV ─────────────────────────────────────────
 function toggleMenu() {
