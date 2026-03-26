@@ -8,6 +8,7 @@
   <title>Admin — EduReg</title>
   <link rel="stylesheet" href="style.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs2-fix@0.0.1/qrcode.min.js"></script>
 </head>
 <body>
 
@@ -98,15 +99,17 @@
       </div>
       <div class="table-wrap" id="studentsTableWrap">
         <table>
-          <thead><tr>
-            <th>Student</th>
-            <th>Student ID</th>
-            <th>Course</th>
-            <th>Year</th>
-            <th>Email</th>
-            <th>Registered</th>
-            <th style="text-align:right;">Actions</th>
-          </tr></thead>
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Student ID</th>
+              <th>Course</th>
+              <th>Year</th>
+              <th>Email</th>
+              <th>Registered</th>
+              <th style="text-align:right;">Actions</th>
+            </tr>
+          </thead>
           <tbody id="studentsTable"><tr><td colspan="7"><div class="empty-state"><div style="font-size:28px;">⏳</div><p>Loading…</p></div></td></tr></tbody>
         </table>
       </div>
@@ -124,13 +127,15 @@
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr>
-            <th>Student</th>
-            <th>Module</th>
-            <th>Session</th>
-            <th>Status</th>
-            <th>Time</th>
-          </tr></thead>
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Module</th>
+              <th>Session</th>
+              <th>Status</th>
+              <th>Time</th>
+            </tr>
+          </thead>
           <tbody id="attendanceTable"><tr><td colspan="5"><div class="empty-state"><div style="font-size:28px;">⏳</div><p>Loading…</p></div></td></tr></tbody>
         </table>
       </div>
@@ -258,8 +263,6 @@ window._orderBy=orderBy; window._where=where; window._onSnapshot=onSnapshot;
 window._fbReady=true;
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-
 <script>
 // ─────────────────────────────────────────────
 // 🔑 SET YOUR ADMIN PASSWORD
@@ -268,6 +271,7 @@ const ADMIN_PASSWORD = "admin1234";
 
 let allStudents=[], allAttendance=[], selectedDocId=null;
 let sessionTimerInterval=null, liveUnsubscribe=null, currentSessionId=null;
+let qrCodeInstance = null;
 
 // ── LIGHTBOX ─────────────────────────────────
 function openLightbox(src){ if(!src)return; document.getElementById('lightboxImg').src=src; document.getElementById('lightboxBackdrop').classList.add('show'); document.body.style.overflow='hidden'; }
@@ -397,7 +401,23 @@ function updateStats(){
 }
 
 // ── QR GENERATOR ──────────────────────────────
-let qrInstance = null;
+function generateQRCodeElement(container, text, width, height) {
+  container.innerHTML = '';
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  
+  // Simple QR generation using canvas (fallback)
+  QRCode.toCanvas(canvas, text, { width: width, margin: 2 }, function(error) {
+    if (error) {
+      console.error('QR generation error:', error);
+      container.innerHTML = '<div style="color:red;">QR generation failed</div>';
+    }
+  });
+  container.appendChild(canvas);
+}
+
 window.generateQR=function(){
   const label=document.getElementById('sessionLabel').value.trim()||'Class Session';
   const duration=parseInt(document.getElementById('sessionDuration').value)||10;
@@ -408,19 +428,30 @@ window.generateQR=function(){
   document.getElementById('qrSessionLabel').textContent=label;
   document.getElementById('qrSessionInfo').textContent=`Valid for ${duration} min · Session ID: ${currentSessionId.slice(-6)}`;
 
-  // Clear previous QR
+  // Generate QR code using canvas method
   const container = document.getElementById('qrContainer');
   container.innerHTML = '';
+  
   try {
-    qrInstance = new QRCode(container, {
-      text: payload,
-      width: 220,
-      height: 220,
-      colorDark: '#000000',
-      colorLight: '#ffffff',
-      correctLevel: QRCode.CorrectLevel.M
+    // Use canvas-based QR generation
+    const canvas = document.createElement('canvas');
+    canvas.width = 220;
+    canvas.height = 220;
+    QRCode.toCanvas(canvas, payload, { width: 220, margin: 1 }, function(err) {
+      if (err) {
+        console.error('QR generation error:', err);
+        container.innerHTML = '<div style="color:var(--danger);text-align:center;">⚠️ QR Error<br><small>Try again</small></div>';
+        toast('Failed to generate QR code', 'error');
+      } else {
+        container.appendChild(canvas);
+        toast('QR code generated!', 'success');
+      }
     });
-  } catch(e) { toast('QR error: '+e.message, 'error'); }
+  } catch(e) {
+    console.error('QR error:', e);
+    container.innerHTML = '<div style="color:var(--danger);text-align:center;">⚠️ QR Error</div>';
+    toast('QR generation failed', 'error');
+  }
 
   startSessionTimer(expires, duration);
   startLiveFeed(currentSessionId);
