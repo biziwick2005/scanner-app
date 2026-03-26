@@ -3,127 +3,101 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin Panel — EduReg</title>
+  <meta name="theme-color" content="#3ddc6e"/>
+  <link rel="manifest" href="manifest.json"/>
+  <title>Admin — EduReg</title>
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 
-<!-- ── LOGIN SCREEN ─────────────────────────────────────── -->
+<!-- LOGIN -->
 <div class="login-wrap" id="loginScreen">
   <div class="card card--glow login-card">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:22px;">
       <span class="nav-logo-dot"></span>
       <span style="font-family:'Syne',sans-serif;font-weight:800;color:var(--accent);font-size:18px;">EduReg</span>
     </div>
     <h1>Admin Access</h1>
-    <p>Enter your password to access the admin panel.</p>
-
-    <div class="field" style="margin-bottom:16px;">
+    <p>Enter your password to access the dashboard.</p>
+    <div class="field" style="margin-bottom:14px;">
       <label>Password</label>
-      <input type="password" id="passwordInput" placeholder="Enter admin password"
-        onkeydown="if(event.key==='Enter') checkPassword()"/>
+      <input type="password" id="passwordInput" placeholder="Admin password" onkeydown="if(event.key==='Enter')checkPassword()"/>
     </div>
-    <p id="loginError" style="color:var(--danger);font-size:13px;margin-bottom:12px;display:none;">
-      Incorrect password. Try again.
-    </p>
-    <button class="btn btn-primary btn-full" onclick="checkPassword()">
-      Access Dashboard →
-    </button>
-    <p style="text-align:center;margin-top:16px;">
-      <a href="index.html" style="color:var(--text-muted);font-size:13px;text-decoration:none;">
-        ← Back to registration
-      </a>
-    </p>
+    <p id="loginError" style="color:var(--danger);font-size:13px;margin-bottom:10px;display:none;">Incorrect password.</p>
+    <button class="btn btn-primary btn-full" onclick="checkPassword()">Access Dashboard →</button>
+    <p style="text-align:center;margin-top:14px;"><a href="index.html" style="color:var(--text-muted);font-size:13px;text-decoration:none;">← Back to registration</a></p>
   </div>
 </div>
 
-<!-- ── ADMIN DASHBOARD ────────────────────────────────────── -->
+<!-- DASHBOARD -->
 <div id="adminScreen" style="display:none;">
-
   <nav class="nav">
     <div class="nav-inner">
-      <a href="#" class="nav-logo">
-        <span class="nav-logo-dot"></span>
-        EduReg Admin
-      </a>
-      <div style="display:flex;align-items:center;gap:12px;">
-        <a href="index.html" class="nav-link" target="_blank">View Registration Page ↗</a>
+      <a href="index.html" class="nav-logo"><span class="nav-logo-dot"></span>EduReg Admin</a>
+      <div class="nav-links">
+        <a href="index.html" class="nav-link" target="_blank">Registration ↗</a>
+        <a href="attendance.html" class="nav-link" target="_blank">Attendance ↗</a>
         <button class="btn btn-outline btn-sm" onclick="logout()">Log out</button>
       </div>
+      <button class="nav-burger" id="burgerBtn" onclick="toggleMenu()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </nav>
+  <div class="nav-drawer" id="navDrawer">
+    <a href="index.html" class="nav-link" target="_blank">📋 Registration Page ↗</a>
+    <a href="attendance.html" class="nav-link" target="_blank">✅ Attendance Page ↗</a>
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+      <button class="btn btn-danger btn-full btn-sm" onclick="logout()">Log out</button>
+    </div>
+  </div>
 
   <div class="container--wide" style="padding-bottom:64px;">
-
     <div class="admin-header">
       <div>
-        <h1>Student Registry</h1>
-        <p style="color:var(--text-muted);font-size:14px;margin-top:4px;">Manage all registered students</p>
+        <h1>Dashboard</h1>
+        <p style="color:var(--text-muted);font-size:13px;margin-top:3px;">EduReg Admin Panel</p>
       </div>
       <div class="export-row">
         <button class="btn btn-outline btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
-        <button class="btn btn-primary btn-sm" onclick="loadStudents()">↻ Refresh</button>
+        <button class="btn btn-primary btn-sm" onclick="loadAll()">↻ Refresh</button>
       </div>
     </div>
 
     <!-- STATS -->
     <div class="stats-row">
-      <div class="stat-card">
-        <div class="stat-label">Total Students</div>
-        <div class="stat-value" id="statTotal">—</div>
-        <div class="stat-sub">registered faces</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Most Popular Course</div>
-        <div class="stat-value" id="statCourse" style="font-size:18px;padding-top:6px;">—</div>
-        <div class="stat-sub" id="statCourseCount"></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Latest Registration</div>
-        <div class="stat-value" id="statLatest" style="font-size:18px;padding-top:6px;">—</div>
-        <div class="stat-sub">most recent</div>
-      </div>
+      <div class="stat-card"><div class="stat-label">Students</div><div class="stat-value" id="statTotal">—</div><div class="stat-sub">registered</div></div>
+      <div class="stat-card"><div class="stat-label">Attendance Today</div><div class="stat-value" id="statToday">—</div><div class="stat-sub">check-ins today</div></div>
+      <div class="stat-card"><div class="stat-label">Top Course</div><div class="stat-value" id="statCourse" style="font-size:16px;padding-top:4px;">—</div><div class="stat-sub" id="statCourseCount"></div></div>
+      <div class="stat-card"><div class="stat-label">Latest Student</div><div class="stat-value" id="statLatest" style="font-size:16px;padding-top:4px;">—</div><div class="stat-sub">most recent</div></div>
     </div>
 
-    <!-- TOOLBAR -->
-    <div class="toolbar">
-      <div class="search-wrap">
-        <span class="search-icon">🔍</span>
-        <input type="text" id="searchInput" placeholder="Search by name, ID, course, email…"
-          oninput="filterStudents()"/>
-      </div>
-      <select id="courseFilter" onchange="filterStudents()"
-        style="background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);outline:none;min-width:160px;">
-        <option value="">All Courses</option>
-        <option>Computer Science</option>
-        <option>Information Technology</option>
-        <option>Business Administration</option>
-        <option>Accounting &amp; Finance</option>
-        <option>Nursing</option>
-        <option>Engineering</option>
-        <option>Education</option>
-        <option>Law</option>
-        <option>Medicine</option>
-        <option>Agriculture</option>
-        <option>Other</option>
-      </select>
-      <select id="yearFilter" onchange="filterStudents()"
-        style="background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);outline:none;min-width:130px;">
-        <option value="">All Years</option>
-        <option>Year 1</option>
-        <option>Year 2</option>
-        <option>Year 3</option>
-        <option>Year 4</option>
-        <option>Year 5</option>
-        <option>Postgraduate</option>
-      </select>
+    <!-- TABS -->
+    <div class="admin-tabs">
+      <button class="tab-btn active" onclick="switchTab('students',this)">Students</button>
+      <button class="tab-btn" onclick="switchTab('attendance',this)">Attendance Records</button>
+      <button class="tab-btn" onclick="switchTab('qr',this)">Generate QR Session</button>
     </div>
 
-    <!-- TABLE -->
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
+    <!-- TAB: STUDENTS -->
+    <div class="tab-panel active" id="tab-students">
+      <div class="toolbar">
+        <div class="search-wrap"><span class="search-icon">🔍</span><input type="text" id="searchInput" placeholder="Search name, ID, email…" oninput="filterStudents()"/></div>
+        <select id="courseFilter" onchange="filterStudents()" style="background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);outline:none;">
+          <option value="">All Courses</option>
+          <option>Computer Science</option><option>Information Technology</option>
+          <option>Business Administration</option><option>Accounting &amp; Finance</option>
+          <option>Nursing</option><option>Engineering</option><option>Education</option>
+          <option>Law</option><option>Medicine</option><option>Agriculture</option><option>Other</option>
+        </select>
+        <select id="yearFilter" onchange="filterStudents()" style="background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);outline:none;">
+          <option value="">All Years</option>
+          <option>Year 1</option><option>Year 2</option><option>Year 3</option><option>Year 4</option><option>Year 5</option><option>Postgraduate</option>
+        </select>
+      </div>
+      <div class="table-wrap" id="studentsTableWrap">
+        <table>
+          <thead><tr>
             <th>Student</th>
             <th>Student ID</th>
             <th>Course</th>
@@ -131,80 +105,134 @@
             <th>Email</th>
             <th>Registered</th>
             <th style="text-align:right;">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="studentsTable">
-          <tr>
-            <td colspan="7">
-              <div class="empty-state">
-                <div style="font-size:32px;">⏳</div>
-                <p>Loading students…</p>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+          </tr></thead>
+          <tbody id="studentsTable"><tr><td colspan="7"><div class="empty-state"><div style="font-size:28px;">⏳</div><p>Loading…</p></div></td></tr></tbody>
+        </table>
+      </div>
+      <p id="resultCount" style="font-size:12px;color:var(--text-dim);margin-top:8px;"></p>
     </div>
 
-    <p id="resultCount" style="font-size:13px;color:var(--text-dim);margin-top:10px;"></p>
+    <!-- TAB: ATTENDANCE -->
+    <div class="tab-panel" id="tab-attendance">
+      <div class="toolbar">
+        <div class="search-wrap"><span class="search-icon">🔍</span><input type="text" id="attSearchInput" placeholder="Search name, module, session…" oninput="filterAttendance()"/></div>
+        <select id="attModuleFilter" onchange="filterAttendance()" style="background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:10px 14px;border-radius:var(--radius-sm);outline:none;">
+          <option value="">All Modules</option>
+        </select>
+        <button class="btn btn-outline btn-sm" onclick="exportAttendanceCSV()">⬇ Export CSV</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Student</th>
+            <th>Module</th>
+            <th>Session</th>
+            <th>Status</th>
+            <th>Time</th>
+          </tr></thead>
+          <tbody id="attendanceTable"><tr><td colspan="5"><div class="empty-state"><div style="font-size:28px;">⏳</div><p>Loading…</p></div></td></tr></tbody>
+        </table>
+      </div>
+      <p id="attCount" style="font-size:12px;color:var(--text-dim);margin-top:8px;"></p>
+    </div>
 
+    <!-- TAB: QR GENERATOR -->
+    <div class="tab-panel" id="tab-qr">
+      <div style="max-width:560px;margin:0 auto;">
+        <div class="card" style="margin-bottom:20px;">
+          <h3 style="font-size:17px;margin-bottom:5px;">Generate Attendance Session</h3>
+          <p style="color:var(--text-muted);font-size:13px;margin-bottom:20px;">Create a time-limited QR code. Show it on screen — students scan it to unlock attendance for that session. The QR expires automatically.</p>
+
+          <div class="form-grid" style="margin-bottom:16px;">
+            <div class="field full">
+              <label>Session Label</label>
+              <input type="text" id="sessionLabel" placeholder="e.g. Monday 8AM Lecture — Comp Sci"/>
+            </div>
+            <div class="field">
+              <label>Duration (minutes)</label>
+              <select id="sessionDuration">
+                <option value="5">5 minutes</option>
+                <option value="10" selected>10 minutes</option>
+                <option value="15">15 minutes</option>
+                <option value="30">30 minutes</option>
+                <option value="60">1 hour</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Date</label>
+              <input type="date" id="sessionDate"/>
+            </div>
+          </div>
+
+          <button class="btn btn-primary btn-full" onclick="generateQR()">Generate QR Code</button>
+        </div>
+
+        <!-- QR DISPLAY -->
+        <div id="qrResult" style="display:none;">
+          <div class="qr-session-card">
+            <h3 id="qrSessionLabel">Session QR</h3>
+            <p id="qrSessionInfo">Show this to your students</p>
+            <div style="display:flex;justify-content:center;margin:16px 0;">
+              <div class="qr-display"><canvas id="qrCanvas"></canvas></div>
+            </div>
+            <div class="session-timer" id="sessionTimer">10:00</div>
+            <p style="font-size:12px;color:var(--text-dim);">QR expires when timer reaches 0:00</p>
+            <div style="display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap;">
+              <button class="btn btn-outline btn-sm" onclick="regenerateQR()">↻ New QR</button>
+              <button class="btn btn-danger btn-sm" onclick="stopSession()">Stop Session</button>
+            </div>
+          </div>
+
+          <!-- LIVE ATTENDANCE FEED -->
+          <div class="card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap;">
+              <h3 style="font-size:16px;">Live Attendance Feed</h3>
+              <span class="badge" id="liveFeedCount">0 present</span>
+            </div>
+            <div id="liveFeed" style="min-height:80px;">
+              <div class="empty-state" style="padding:24px;"><p>Waiting for students to check in…</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- ── STUDENT DETAIL MODAL ────────────────────────────────── -->
+<!-- STUDENT DETAIL MODAL -->
 <div class="modal-backdrop" id="modalBackdrop" onclick="closeModal(event)">
   <div class="modal">
-    <div class="modal-header">
-      <h3 id="modalName">Student Details</h3>
-      <button class="modal-close" onclick="closeModal()">✕</button>
-    </div>
-    <div style="text-align:center;margin-bottom:20px;">
-      <img id="modalPhoto" class="modal-photo" src="" alt=""/>
-    </div>
+    <div class="modal-header"><h3 id="modalName">Student</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div style="text-align:center;margin-bottom:16px;"><img id="modalPhoto" class="modal-photo" src="" alt="" style="display:none;"/></div>
     <div class="detail-grid" id="modalDetails"></div>
     <hr class="divider"/>
-    <div style="display:flex;gap:10px;justify-content:flex-end;">
-      <button class="btn btn-danger btn-sm" id="deleteBtn" onclick="deleteStudent()">
-        Delete Student
-      </button>
+    <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+      <button class="btn btn-danger btn-sm" onclick="deleteStudent()">Delete</button>
       <button class="btn btn-outline btn-sm" onclick="closeModal()">Close</button>
     </div>
   </div>
 </div>
 
-<!-- TOAST -->
-<div class="toast-container" id="toastContainer"></div>
-
-<!-- CONFIRM DELETE MODAL -->
+<!-- CONFIRM DELETE -->
 <div class="modal-backdrop" id="confirmBackdrop" onclick="closeConfirm(event)">
-  <div class="modal" style="max-width:380px;">
-    <div class="modal-header">
-      <h3>Confirm Deletion</h3>
-      <button class="modal-close" onclick="closeConfirm()">✕</button>
-    </div>
-    <p style="color:var(--text-muted);font-size:14px;margin-bottom:24px;">
-      Are you sure you want to delete <strong id="deleteStudentName"></strong>?
-      This action cannot be undone.
-    </p>
-    <div style="display:flex;gap:10px;justify-content:flex-end;">
+  <div class="modal" style="max-width:360px;">
+    <div class="modal-header"><h3>Confirm Deletion</h3><button class="modal-close" onclick="closeConfirm()">✕</button></div>
+    <p style="color:var(--text-muted);font-size:14px;margin-bottom:22px;">Delete <strong id="deleteStudentName"></strong>? This cannot be undone.</p>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
       <button class="btn btn-outline btn-sm" onclick="closeConfirm()">Cancel</button>
-      <button class="btn btn-danger btn-sm" id="confirmDeleteBtn" onclick="confirmDelete()">
-        Yes, Delete
-      </button>
+      <button class="btn btn-danger btn-sm" id="confirmDeleteBtn" onclick="confirmDelete()">Yes, Delete</button>
     </div>
   </div>
 </div>
 
-<!-- FIREBASE -->
+<div class="toast-container" id="toastContainer"></div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, deleteDoc, doc, orderBy, query }
+import { getFirestore, collection, getDocs, deleteDoc, doc, orderBy, query, where, onSnapshot }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-// No Storage import needed — photos stored as base64 in Firestore
 
-// ─────────────────────────────────────────────────────────
-// 🔧 REPLACE WITH YOUR FIREBASE CONFIG (same as index.html)
-// ─────────────────────────────────────────────────────────
+
 const firebaseConfig = {
   apiKey:            "AIzaSyCV14myKfUZm0JEym8dB6879ywbGrCO0sE",
   authDomain:        "edureg-web.firebaseapp.com",
@@ -213,258 +241,254 @@ const firebaseConfig = {
   messagingSenderId: "868892427867",
   appId:             "1:868892427867:web:619d6a6591f003d0e6217e"
 };
-// ─────────────────────────────────────────────────────────
 
-const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
-window._db = db;
-window._collection = collection;
-window._getDocs = getDocs;
-window._deleteDoc = deleteDoc;
-window._doc = doc;
-window._query = query;
-window._orderBy = orderBy;
-window._firebaseReady = true;
+
+const app=initializeApp(firebaseConfig);
+const db=getFirestore(app);
+window._db=db; window._col=collection; window._getDocs=getDocs;
+window._delDoc=deleteDoc; window._doc=doc; window._q=query;
+window._orderBy=orderBy; window._where=where; window._onSnapshot=onSnapshot;
+window._fbReady=true;
 </script>
 
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
 <script>
-// ─────────────────────────────────────────────────────────
-// 🔑 SET YOUR ADMIN PASSWORD HERE
-// ─────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// 🔑 SET YOUR ADMIN PASSWORD
 const ADMIN_PASSWORD = "admin1234";
-// ─────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────
 
-let allStudents = [];
-let selectedDocId = null;
+let allStudents=[], allAttendance=[], selectedDocId=null;
+let sessionTimerInterval=null, liveUnsubscribe=null, currentSessionId=null;
 
-// ── AUTH ─────────────────────────────────────────────────
-function checkPassword() {
-  const pw = document.getElementById('passwordInput').value;
-  if (pw === ADMIN_PASSWORD) {
-    sessionStorage.setItem('edureg_admin', '1');
-    showAdmin();
-  } else {
-    document.getElementById('loginError').style.display = 'block';
-    document.getElementById('passwordInput').value = '';
-    document.getElementById('passwordInput').focus();
-  }
+// ── AUTH ─────────────────────────────────────
+function checkPassword(){ const pw=document.getElementById('passwordInput').value; if(pw===ADMIN_PASSWORD){ sessionStorage.setItem('edureg_admin','1'); showAdmin(); } else { document.getElementById('loginError').style.display='block'; document.getElementById('passwordInput').value=''; document.getElementById('passwordInput').focus(); } }
+window.checkPassword=checkPassword;
+function showAdmin(){ document.getElementById('loginScreen').style.display='none'; document.getElementById('adminScreen').style.display='block'; loadAll(); }
+function logout(){ sessionStorage.removeItem('edureg_admin'); location.reload(); }
+window.logout=logout;
+window.addEventListener('load',()=>{ if(sessionStorage.getItem('edureg_admin')==='1') showAdmin(); });
+
+// ── NAV ──────────────────────────────────────
+function toggleMenu(){ const b=document.getElementById('burgerBtn'),d=document.getElementById('navDrawer'); b.classList.toggle('open'); d.classList.toggle('open'); }
+window.toggleMenu=toggleMenu;
+
+// ── TABS ─────────────────────────────────────
+function switchTab(name,btn){ document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active')); btn.classList.add('active'); document.getElementById('tab-'+name).classList.add('active'); }
+window.switchTab=switchTab;
+
+// ── LOAD ALL DATA ─────────────────────────────
+async function loadAll(){
+  const wait=()=>new Promise(r=>{ if(window._fbReady)return r(); const iv=setInterval(()=>{ if(window._fbReady){clearInterval(iv);r();}},300); });
+  await wait();
+  await Promise.all([loadStudents(), loadAttendance()]);
 }
-window.checkPassword = checkPassword;
+window.loadAll=loadAll;
 
-function showAdmin() {
-  document.getElementById('loginScreen').style.display = 'none';
-  document.getElementById('adminScreen').style.display = 'block';
-  loadStudents();
-}
-
-function logout() {
-  sessionStorage.removeItem('edureg_admin');
-  location.reload();
-}
-window.logout = logout;
-
-// Auto-login if session exists
-window.addEventListener('load', () => {
-  if (sessionStorage.getItem('edureg_admin') === '1') showAdmin();
-});
-
-// ── LOAD STUDENTS ────────────────────────────────────────
-async function loadStudents() {
-  document.getElementById('studentsTable').innerHTML = `
-    <tr><td colspan="7"><div class="empty-state"><div style="font-size:32px;">⏳</div><p>Loading…</p></div></td></tr>`;
-
-  const waitForFirebase = () => new Promise(res => {
-    if (window._firebaseReady) return res();
-    const iv = setInterval(() => { if (window._firebaseReady) { clearInterval(iv); res(); } }, 200);
-  });
-  await waitForFirebase();
-
+async function loadStudents(){
+  document.getElementById('studentsTable').innerHTML=`<tr><td colspan="7"><div class="empty-state"><div style="font-size:28px;">⏳</div><p>Loading…</p></div></td></tr>`;
   try {
-    const q = window._query(window._collection(window._db, 'students'), window._orderBy('registeredAt','desc'));
-    const snap = await window._getDocs(q);
-    allStudents = [];
-    snap.forEach(d => allStudents.push({ id: d.id, ...d.data() }));
-    renderTable(allStudents);
-    updateStats(allStudents);
-  } catch(e) {
-    console.error(e);
-    document.getElementById('studentsTable').innerHTML = `
-      <tr><td colspan="7"><div class="empty-state"><div style="font-size:32px;">⚠️</div><p>Failed to load: ${e.message}</p></div></td></tr>`;
-  }
+    const q=window._q(window._col(window._db,'students'),window._orderBy('registeredAt','desc'));
+    const snap=await window._getDocs(q);
+    allStudents=[];
+    snap.forEach(d=>allStudents.push({id:d.id,...d.data()}));
+    renderStudents(allStudents); updateStats();
+  } catch(e){ document.getElementById('studentsTable').innerHTML=`<tr><td colspan="7"><div class="empty-state"><p>Error: ${e.message}</p></div></td></tr>`; }
 }
-window.loadStudents = loadStudents;
 
-// ── RENDER TABLE ─────────────────────────────────────────
-function renderTable(students) {
-  const tbody = document.getElementById('studentsTable');
-  document.getElementById('resultCount').textContent =
-    students.length ? `Showing ${students.length} student${students.length!==1?'s':''}` : '';
+async function loadAttendance(){
+  document.getElementById('attendanceTable').innerHTML=`<tr><td colspan="5"><div class="empty-state"><div style="font-size:28px;">⏳</div><p>Loading…</p></div></td></tr>`;
+  try {
+    const q=window._q(window._col(window._db,'attendance'),window._orderBy('markedAt','desc'));
+    const snap=await window._getDocs(q);
+    allAttendance=[];
+    const modules=new Set();
+    snap.forEach(d=>{ const r={id:d.id,...d.data()}; allAttendance.push(r); if(r.module)modules.add(r.module); });
+    // Populate module filter
+    const sel=document.getElementById('attModuleFilter');
+    sel.innerHTML='<option value="">All Modules</option>';
+    [...modules].sort().forEach(m=>{ const o=document.createElement('option'); o.value=o.textContent=m; sel.appendChild(o); });
+    renderAttendance(allAttendance);
+    updateStats();
+  } catch(e){ document.getElementById('attendanceTable').innerHTML=`<tr><td colspan="5"><div class="empty-state"><p>Error: ${e.message}</p></div></td></tr>`; }
+}
 
-  if (!students.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div style="font-size:32px;">👤</div><p>No students found.</p></div></td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = students.map(s => {
-    const avatar = s.photoURL
-      ? `<img class="td-avatar" src="${s.photoURL}" alt="${s.fullName}"/>`
-      : `<div class="td-avatar" style="display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--text-dim);">👤</div>`;
-    const date = s.registeredAt?.toDate
-      ? s.registeredAt.toDate().toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'})
-      : '—';
-    return `
-    <tr>
-      <td>
-        <div class="td-name">
-          ${avatar}
-          <span class="td-name-text">${esc(s.fullName)}</span>
-        </div>
-      </td>
-      <td><span class="td-id">${esc(s.studentId)}</span></td>
-      <td><span class="badge">${esc(s.course)}</span></td>
-      <td style="color:var(--text-muted);font-size:13px;">${esc(s.year)}</td>
-      <td style="color:var(--text-muted);font-size:13px;">${esc(s.email)}</td>
-      <td style="color:var(--text-dim);font-size:12px;">${date}</td>
-      <td style="text-align:right;">
-        <button class="btn btn-outline btn-sm" onclick="openModal('${s.id}')">View</button>
-      </td>
+// ── RENDER STUDENTS ───────────────────────────
+function renderStudents(students){
+  const tbody=document.getElementById('studentsTable');
+  document.getElementById('resultCount').textContent=students.length?`Showing ${students.length} student${students.length!==1?'s':''}`:'' ;
+  if(!students.length){ tbody.innerHTML=`<tr><td colspan="7"><div class="empty-state"><div style="font-size:28px;">👤</div><p>No students found.</p></div></td></tr>`; return; }
+  tbody.innerHTML=students.map(s=>{
+    const avatar=s.photoURL?`<img class="td-avatar" src="${s.photoURL}" alt="${esc(s.fullName)}" style="object-fit:cover;"/>`:`<div class="td-avatar" style="display:flex;align-items:center;justify-content:center;color:var(--text-dim);">👤</div>`;
+    const date=s.registeredAt?.toDate?s.registeredAt.toDate().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';
+    return `<tr>
+      <td class="col-name" data-label="Student"><div class="td-name">${avatar}<div><div class="td-name-text">${esc(s.fullName)}</div><div class="td-id">${esc(s.studentId)}</div></div></div></td>
+      <td class="col-id" data-label="ID"><span class="td-id">${esc(s.studentId)}</span></td>
+      <td class="col-course" data-label="Course"><span class="badge">${esc(s.course)}</span></td>
+      <td class="col-year" data-label="Year" style="color:var(--text-muted);font-size:12px;">${esc(s.year)}</td>
+      <td class="col-email" data-label="Email" style="color:var(--text-muted);font-size:12px;">${esc(s.email)}</td>
+      <td class="col-date" data-label="Date" style="color:var(--text-dim);font-size:11px;">${date}</td>
+      <td class="col-actions"><button class="btn btn-outline btn-sm" onclick="openModal('${s.id}')">View</button></td>
     </tr>`;
   }).join('');
 }
 
-// ── FILTER ───────────────────────────────────────────────
-function filterStudents() {
-  const q   = document.getElementById('searchInput').value.toLowerCase();
-  const crs = document.getElementById('courseFilter').value;
-  const yr  = document.getElementById('yearFilter').value;
-  const filtered = allStudents.filter(s => {
-    const match = !q || [s.fullName, s.studentId, s.course, s.email, s.phone]
-      .some(v => v && v.toLowerCase().includes(q));
-    const cMatch = !crs || s.course === crs;
-    const yMatch = !yr  || s.year  === yr;
-    return match && cMatch && yMatch;
+// ── RENDER ATTENDANCE ─────────────────────────
+function renderAttendance(records){
+  const tbody=document.getElementById('attendanceTable');
+  document.getElementById('attCount').textContent=records.length?`${records.length} record${records.length!==1?'s':''}`:'' ;
+  if(!records.length){ tbody.innerHTML=`<tr><td colspan="5"><div class="empty-state"><div style="font-size:28px;">📋</div><p>No attendance records yet.</p></div></td></tr>`; return; }
+  tbody.innerHTML=records.map(r=>{
+    const avatar=r.photoURL?`<img class="td-avatar" src="${r.photoURL}" alt="${esc(r.fullName)}" style="object-fit:cover;"/>`:`<div class="td-avatar" style="display:flex;align-items:center;justify-content:center;color:var(--text-dim);">👤</div>`;
+    const time=r.markedAt?.toDate?r.markedAt.toDate().toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'—';
+    return `<tr>
+      <td data-label="Student"><div class="td-name">${avatar}<div><div class="td-name-text">${esc(r.fullName)}</div><div class="td-id">${esc(r.studentId)}</div></div></div></td>
+      <td data-label="Module"><span class="badge badge-info">${esc(r.module)}</span></td>
+      <td data-label="Session" style="color:var(--text-muted);font-size:12px;">${esc(r.sessionLabel||r.sessionId||'—')}</td>
+      <td data-label="Status"><span class="badge">${esc(r.status||'present')}</span></td>
+      <td data-label="Time" style="color:var(--text-dim);font-size:11px;font-family:monospace;">${time}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── FILTERS ───────────────────────────────────
+function filterStudents(){
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  const crs=document.getElementById('courseFilter').value;
+  const yr=document.getElementById('yearFilter').value;
+  renderStudents(allStudents.filter(s=>{ const m=!q||[s.fullName,s.studentId,s.course,s.email,s.phone].some(v=>v&&v.toLowerCase().includes(q)); return m&&(!crs||s.course===crs)&&(!yr||s.year===yr); }));
+}
+window.filterStudents=filterStudents;
+
+function filterAttendance(){
+  const q=document.getElementById('attSearchInput').value.toLowerCase();
+  const mod=document.getElementById('attModuleFilter').value;
+  renderAttendance(allAttendance.filter(r=>{ const m=!q||[r.fullName,r.studentId,r.module,r.sessionLabel].some(v=>v&&v.toLowerCase().includes(q)); return m&&(!mod||r.module===mod); }));
+}
+window.filterAttendance=filterAttendance;
+
+// ── STATS ──────────────────────────────────────
+function updateStats(){
+  document.getElementById('statTotal').textContent=allStudents.length;
+  const today=new Date().toDateString();
+  const todayCount=allAttendance.filter(r=>r.markedAt?.toDate&&r.markedAt.toDate().toDateString()===today).length;
+  document.getElementById('statToday').textContent=todayCount;
+  const cc={}; allStudents.forEach(s=>{if(s.course)cc[s.course]=(cc[s.course]||0)+1;});
+  const top=Object.entries(cc).sort((a,b)=>b[1]-a[1])[0];
+  if(top){ document.getElementById('statCourse').textContent=top[0].split(' ').slice(0,2).join(' '); document.getElementById('statCourseCount').textContent=`${top[1]} students`; }
+  if(allStudents[0]) document.getElementById('statLatest').textContent=allStudents[0].fullName?.split(' ')[0]||'—';
+}
+
+// ── QR GENERATOR ──────────────────────────────
+window.generateQR=function(){
+  const label=document.getElementById('sessionLabel').value.trim()||'Class Session';
+  const duration=parseInt(document.getElementById('sessionDuration').value)||10;
+  const expires=Date.now()+(duration*60*1000);
+  currentSessionId='sess_'+Date.now();
+  const payload=JSON.stringify({type:'edureg_session',id:currentSessionId,label,expires});
+  document.getElementById('qrResult').style.display='block';
+  document.getElementById('qrSessionLabel').textContent=label;
+  document.getElementById('qrSessionInfo').textContent=`Valid for ${duration} minutes · Session ID: ${currentSessionId.slice(-6)}`;
+  QRCode.toCanvas(document.getElementById('qrCanvas'),payload,{width:220,margin:2,color:{dark:'#000',light:'#fff'}},e=>{ if(e) toast('QR error: '+e.message,'error'); });
+  startSessionTimer(expires, duration);
+  startLiveFeed(currentSessionId);
+};
+
+function startSessionTimer(expires, totalMin){
+  if(sessionTimerInterval) clearInterval(sessionTimerInterval);
+  const el=document.getElementById('sessionTimer');
+  sessionTimerInterval=setInterval(()=>{
+    const left=expires-Date.now(); if(left<=0){ clearInterval(sessionTimerInterval); el.textContent='0:00'; el.classList.add('warn'); toast('Session expired.','warn'); return; }
+    const m=Math.floor(left/60000), s=Math.floor((left%60000)/1000);
+    el.textContent=`${m}:${s.toString().padStart(2,'0')}`;
+    el.classList.toggle('warn',left<60000);
+  },500);
+}
+
+function startLiveFeed(sessionId){
+  if(liveUnsubscribe) liveUnsubscribe();
+  const q=window._q(window._col(window._db,'attendance'),window._where('sessionId','==',sessionId));
+  liveUnsubscribe=window._onSnapshot(q,snap=>{
+    const records=[]; snap.forEach(d=>records.push(d.data()));
+    document.getElementById('liveFeedCount').textContent=`${records.length} present`;
+    const feed=document.getElementById('liveFeed');
+    if(!records.length){ feed.innerHTML='<div class="empty-state" style="padding:24px;"><p>Waiting for students…</p></div>'; return; }
+    feed.innerHTML=records.map(r=>{
+      const avatar=r.photoURL?`<img class="att-record-avatar" src="${r.photoURL}" style="object-fit:cover;" alt=""/>`:`<div class="att-record-avatar">👤</div>`;
+      const time=r.markedAt?.toDate?r.markedAt.toDate().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):'now';
+      return `<div class="att-record">${avatar}<div><div class="att-record-name">${esc(r.fullName)}</div><div class="att-record-meta">${esc(r.module)} · ${esc(r.studentId)}</div></div><div class="att-record-time">${time}</div></div>`;
+    }).join('');
   });
-  renderTable(filtered);
-}
-window.filterStudents = filterStudents;
-
-// ── STATS ────────────────────────────────────────────────
-function updateStats(students) {
-  document.getElementById('statTotal').textContent = students.length;
-
-  const courseCounts = {};
-  students.forEach(s => { if(s.course) courseCounts[s.course] = (courseCounts[s.course]||0)+1; });
-  const topCourse = Object.entries(courseCounts).sort((a,b)=>b[1]-a[1])[0];
-  if (topCourse) {
-    document.getElementById('statCourse').textContent = topCourse[0].split(' ').slice(0,2).join(' ');
-    document.getElementById('statCourseCount').textContent = `${topCourse[1]} student${topCourse[1]!==1?'s':''}`;
-  }
-
-  const latest = students[0];
-  if (latest) {
-    document.getElementById('statLatest').textContent = latest.fullName?.split(' ')[0] || '—';
-  }
 }
 
-// ── MODAL ────────────────────────────────────────────────
-window.openModal = function(id) {
-  const s = allStudents.find(x => x.id === id);
-  if (!s) return;
-  selectedDocId = id;
+window.regenerateQR=function(){ if(liveUnsubscribe)liveUnsubscribe(); if(sessionTimerInterval)clearInterval(sessionTimerInterval); document.getElementById('qrResult').style.display='none'; window.generateQR(); };
+window.stopSession=function(){ if(liveUnsubscribe)liveUnsubscribe(); if(sessionTimerInterval)clearInterval(sessionTimerInterval); document.getElementById('qrResult').style.display='none'; toast('Session stopped.','warn'); };
 
-  document.getElementById('modalName').textContent = s.fullName;
-  document.getElementById('modalPhoto').src = s.photoURL || '';
-  document.getElementById('modalPhoto').style.display = s.photoURL ? 'block' : 'none';
-  document.getElementById('deleteStudentName').textContent = s.fullName;
-
-  const date = s.registeredAt?.toDate
-    ? s.registeredAt.toDate().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})
-    : '—';
-  const dob = s.dob ? new Date(s.dob).toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'}) : '—';
-
-  document.getElementById('modalDetails').innerHTML = [
-    ['Student ID', s.studentId],
-    ['Course', s.course],
-    ['Year of Study', s.year],
-    ['Date of Birth', dob],
-    ['Email', s.email],
-    ['Phone', s.phone],
-    ['Registered', date],
-  ].map(([l,v]) => `<div class="detail-item"><label>${l}</label><p>${esc(v||'—')}</p></div>`).join('');
-
+// ── MODAL ──────────────────────────────────────
+window.openModal=function(id){
+  const s=allStudents.find(x=>x.id===id); if(!s)return;
+  selectedDocId=id;
+  document.getElementById('modalName').textContent=s.fullName;
+  const photo=document.getElementById('modalPhoto');
+  if(s.photoURL){ photo.src=s.photoURL; photo.style.display='block'; } else { photo.style.display='none'; }
+  document.getElementById('deleteStudentName').textContent=s.fullName;
+  const date=s.registeredAt?.toDate?s.registeredAt.toDate().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'}):'—';
+  const dob=s.dob?new Date(s.dob).toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'}):'—';
+  document.getElementById('modalDetails').innerHTML=[
+    ['Student ID',s.studentId],['Course',s.course],['Year of Study',s.year],
+    ['Date of Birth',dob],['Email',s.email],['Phone',s.phone],['Registered',date]
+  ].map(([l,v])=>`<div class="detail-item"><label>${l}</label><p>${esc(v||'—')}</p></div>`).join('');
   document.getElementById('modalBackdrop').classList.add('show');
 };
+window.closeModal=function(e){ if(e&&e.target!==document.getElementById('modalBackdrop'))return; document.getElementById('modalBackdrop').classList.remove('show'); selectedDocId=null; };
 
-window.closeModal = function(e) {
-  if (e && e.target !== document.getElementById('modalBackdrop')) return;
-  document.getElementById('modalBackdrop').classList.remove('show');
-  selectedDocId = null;
-};
-
-// ── DELETE ────────────────────────────────────────────────
-window.deleteStudent = function() {
-  document.getElementById('modalBackdrop').classList.remove('show');
-  document.getElementById('confirmBackdrop').classList.add('show');
-};
-
-window.closeConfirm = function(e) {
-  if (e && e.target !== document.getElementById('confirmBackdrop')) return;
-  document.getElementById('confirmBackdrop').classList.remove('show');
-};
-
-window.confirmDelete = async function() {
-  if (!selectedDocId) return;
-  const btn = document.getElementById('confirmDeleteBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner" style="border-top-color:#fff;"></span> Deleting…';
+// ── DELETE ─────────────────────────────────────
+window.deleteStudent=function(){ document.getElementById('modalBackdrop').classList.remove('show'); document.getElementById('confirmBackdrop').classList.add('show'); };
+window.closeConfirm=function(e){ if(e&&e.target!==document.getElementById('confirmBackdrop'))return; document.getElementById('confirmBackdrop').classList.remove('show'); };
+window.confirmDelete=async function(){
+  if(!selectedDocId)return;
+  const btn=document.getElementById('confirmDeleteBtn'); btn.disabled=true; btn.innerHTML='<span class="spinner spinner-light"></span>';
   try {
-    await window._deleteDoc(window._doc(window._db, 'students', selectedDocId));
-    allStudents = allStudents.filter(s => s.id !== selectedDocId);
-    renderTable(allStudents);
-    updateStats(allStudents);
+    await window._delDoc(window._doc(window._db,'students',selectedDocId));
+    allStudents=allStudents.filter(s=>s.id!==selectedDocId);
+    renderStudents(allStudents); updateStats();
     document.getElementById('confirmBackdrop').classList.remove('show');
-    toast('Student deleted.', 'warn');
-  } catch(e) {
-    toast('Delete failed: ' + e.message, 'error');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Yes, Delete';
-    selectedDocId = null;
-  }
+    toast('Student deleted.','warn');
+  } catch(e){ toast('Delete failed: '+e.message,'error'); }
+  finally { btn.disabled=false; btn.textContent='Yes, Delete'; selectedDocId=null; }
 };
 
-// ── EXPORT CSV ────────────────────────────────────────────
-window.exportCSV = function() {
-  if (!allStudents.length) { toast('No students to export.','warn'); return; }
-  const headers = ['Full Name','Student ID','Course','Year','Date of Birth','Email','Phone','Registered'];
-  const rows = allStudents.map(s => {
-    const date = s.registeredAt?.toDate
-      ? s.registeredAt.toDate().toLocaleDateString('en-GB')
-      : '';
-    return [s.fullName,s.studentId,s.course,s.year,s.dob,s.email,s.phone,date]
-      .map(v => `"${(v||'').replace(/"/g,'""')}"`).join(',');
+// ── EXPORT ─────────────────────────────────────
+window.exportCSV=function(){
+  if(!allStudents.length){toast('No students.','warn');return;}
+  const h=['Full Name','Student ID','Course','Year','Date of Birth','Email','Phone','Registered'];
+  const rows=allStudents.map(s=>{
+    const date=s.registeredAt?.toDate?s.registeredAt.toDate().toLocaleDateString('en-GB'):'';
+    return [s.fullName,s.studentId,s.course,s.year,s.dob,s.email,s.phone,date].map(v=>`"${(v||'').replace(/"/g,'""')}"`).join(',');
   });
-  const csv = [headers.join(','), ...rows].join('\n');
-  const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-  a.download = `students_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
-  toast('CSV exported!', 'success');
+  dl([h.join(','),...rows].join('\n'), `students_${new Date().toISOString().slice(0,10)}.csv`);
+  toast('Students CSV exported!','success');
 };
 
-// ── HELPERS ───────────────────────────────────────────────
-function esc(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
+window.exportAttendanceCSV=function(){
+  if(!allAttendance.length){toast('No records.','warn');return;}
+  const h=['Full Name','Student ID','Course','Year','Module','Session','Status','Time'];
+  const rows=allAttendance.map(r=>{
+    const time=r.markedAt?.toDate?r.markedAt.toDate().toLocaleString('en-GB'):'';
+    return [r.fullName,r.studentId,r.course,r.year,r.module,r.sessionLabel||r.sessionId,r.status,time].map(v=>`"${(v||'').replace(/"/g,'""')}"`).join(',');
+  });
+  dl([h.join(','),...rows].join('\n'), `attendance_${new Date().toISOString().slice(0,10)}.csv`);
+  toast('Attendance CSV exported!','success');
+};
 
-function toast(msg, type='success') {
-  const icons = { success:'✓', error:'✕', warn:'!' };
-  const t = document.createElement('div');
-  t.className = `toast ${type}`;
-  t.innerHTML = `<span>${icons[type]||'i'}</span> ${msg}`;
-  document.getElementById('toastContainer').appendChild(t);
-  setTimeout(() => { t.style.opacity='0'; setTimeout(()=>t.remove(),300); }, 3500);
-}
+function dl(csv,name){ const a=document.createElement('a'); a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv); a.download=name; a.click(); }
+
+// Set default date for session
+window.addEventListener('load',()=>{ const d=document.getElementById('sessionDate'); if(d) d.valueAsDate=new Date(); });
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function toast(msg,type='success'){ const icons={success:'✓',error:'✕',warn:'!'}; const t=document.createElement('div'); t.className=`toast ${type}`; t.innerHTML=`<span>${icons[type]||'i'}</span>${msg}`; document.getElementById('toastContainer').appendChild(t); setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),300);},3500); }
 </script>
 </body>
 </html>
