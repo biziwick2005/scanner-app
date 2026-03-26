@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#3ddc6e"/>
+  <link rel="manifest" href="manifest.json"/>
+  <title>EduReg — Parent Portal</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<div class="login-wrap" id="parentLoginScreen">
+  <div class="card card--glow login-card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:22px;">
+      <span class="nav-logo-dot"></span>
+      <span style="font-family:'Syne',sans-serif;font-weight:800;color:var(--accent);font-size:18px;">EduReg Parent Portal</span>
+    </div>
+    <h1>Parent Access</h1>
+    <p style="color:var(--text-muted);font-size:13px;margin-bottom:20px;">Enter your child's Student ID and Access Code</p>
+    <div class="field" style="margin-bottom:14px;">
+      <label>Student ID</label>
+      <input type="text" id="parentStudentId" placeholder="e.g. STU-2024-001" autocomplete="off"/>
+    </div>
+    <div class="field" style="margin-bottom:14px;">
+      <label>Access Code</label>
+      <input type="password" id="parentAccessCode" placeholder="6-digit access code" maxlength="6"/>
+    </div>
+    <p id="parentLoginError" style="color:var(--danger);font-size:13px;margin-bottom:10px;display:none;"></p>
+    <button class="btn btn-primary btn-full" onclick="parentLogin()">Access Child's Records →</button>
+    <p style="text-align:center;margin-top:14px;font-size:12px;color:var(--text-muted);">
+      <i class="fa-solid fa-shield-alt"></i> Access code provided during student registration
+    </p>
+    <p style="text-align:center;margin-top:10px;">
+      <a href="index.html" style="color:var(--text-muted);font-size:12px;">← Back to Student Registration</a>
+    </p>
+  </div>
+</div>
+
+<div id="parentDashboard" style="display:none;">
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="#" class="nav-logo"><span class="nav-logo-dot"></span>EduReg Parent Portal</a>
+      <div class="nav-links">
+        <span style="color:var(--accent);font-size:13px;">
+          <i class="fa-solid fa-child"></i> <span id="parentChildName">Student</span>
+        </span>
+        <button class="btn btn-outline btn-sm" onclick="parentLogout()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+      </div>
+      <button class="nav-burger" id="burgerBtn" onclick="toggleMenu()">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+  <div class="nav-drawer" id="navDrawer">
+    <a href="#" class="nav-link active" onclick="switchParentTab('dashboard')"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+    <a href="#" class="nav-link" onclick="switchParentTab('attendance')"><i class="fa-solid fa-calendar-check"></i> Attendance History</a>
+    <a href="#" class="nav-link" onclick="switchParentTab('notifications')"><i class="fa-solid fa-bell"></i> Notifications</a>
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+      <button class="btn btn-danger btn-full btn-sm" onclick="parentLogout()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+    </div>
+  </div>
+
+  <div class="container--wide" style="padding-bottom:64px;">
+    <div id="parentDashboardTab" class="parent-tab">
+      <div class="admin-header">
+        <div>
+          <h1>My Child's Progress</h1>
+          <p style="color:var(--text-muted);font-size:13px;" id="parentStudentInfo"></p>
+        </div>
+        <div class="export-row">
+          <button class="btn btn-outline btn-sm" onclick="exportChildReport()"><i class="fa-solid fa-download"></i> Download Report</button>
+          <button class="btn btn-primary btn-sm" onclick="refreshParentData()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+        </div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-label">Total Classes</div><div class="stat-value" id="parentTotalClasses">—</div><div class="stat-sub">sessions held</div></div>
+        <div class="stat-card"><div class="stat-label">Classes Attended</div><div class="stat-value" id="parentAttended">—</div><div class="stat-sub">present</div></div>
+        <div class="stat-card"><div class="stat-label">Attendance Rate</div><div class="stat-value" id="parentAttendanceRate">—</div><div class="stat-sub">overall</div></div>
+        <div class="stat-card"><div class="stat-label">Last Attendance</div><div class="stat-value" id="parentLastAttendance" style="font-size:16px;">—</div><div class="stat-sub">most recent</div></div>
+      </div>
+      <div class="card" style="margin-bottom:20px;">
+        <h3 style="font-size:16px; margin-bottom:15px;">Attendance Trend (Last 30 Days)</h3>
+        <canvas id="parentAttendanceChart" style="max-height:300px;"></canvas>
+      </div>
+      <div class="card">
+        <h3 style="font-size:16px; margin-bottom:15px;">Recent Attendance Records</h3>
+        <div id="parentRecentAttendance" style="max-height:400px; overflow-y:auto;">
+          <div class="empty-state">No attendance records yet</div>
+        </div>
+      </div>
+    </div>
+    
+    <div id="parentAttendanceTab" class="parent-tab" style="display:none;">
+      <div class="admin-header">
+        <div><h1>Full Attendance History</h1><p style="color:var(--text-muted);font-size:13px;">Complete record of all classes</p></div>
+        <div class="export-row"><button class="btn btn-outline btn-sm" onclick="exportFullAttendance()"><i class="fa-solid fa-file-csv"></i> Export CSV</button></div>
+      </div>
+      <div class="toolbar">
+        <div class="search-wrap"><span class="search-icon"><i class="fa-solid fa-magnifying-glass"></i></span><input type="text" id="parentHistorySearch" placeholder="Search by module, session..." oninput="filterParentHistory()"/></div>
+        <select id="parentModuleFilter" onchange="filterParentHistory()" style="background:var(--surface);border:1px solid var(--border);color:var(--text);padding:10px 14px;"><option value="">All Modules</option></select>
+      </div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Date & Time</th><th>Module/Course</th><th>Session</th><th>Status</th><th>Lecturer</th></tr></thead><tbody id="parentHistoryTable"></tbody></table>
+      </div>
+      <p id="parentHistoryCount" style="font-size:12px;color:var(--text-dim);margin-top:8px;"></p>
+    </div>
+    
+    <div id="parentNotificationsTab" class="parent-tab" style="display:none;">
+      <div class="admin-header"><div><h1>Notifications</h1><p style="color:var(--text-muted);font-size:13px;">Important updates about your child's attendance</p></div><button class="btn btn-outline btn-sm" onclick="markAllRead()"><i class="fa-solid fa-check-double"></i> Mark All Read</button></div>
+      <div id="parentNotificationsList" style="max-height:500px; overflow-y:auto;"><div class="empty-state">No notifications yet</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs, getDoc, updateDoc, doc, orderBy, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCV14myKfUZm0JEym8dB6879ywbGrCO0sE",
+  authDomain: "edureg-web.firebaseapp.com",
+  projectId: "edureg-web",
+  storageBucket: "edureg-web.firebasestorage.app",
+  messagingSenderId: "868892427867",
+  appId: "1:868892427867:web:619d6a6591f003d0e6217e"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let currentStudent = null;
+let studentAttendance = [];
+let studentSessions = [];
+let parentAttendanceChart = null;
+let parentNotifications = [];
+
+window.parentLogin = async function() {
+  const studentId = document.getElementById('parentStudentId').value.trim();
+  const accessCode = document.getElementById('parentAccessCode').value.trim();
+  const errorEl = document.getElementById('parentLoginError');
+  if (!studentId || !accessCode) {
+    errorEl.textContent = 'Please enter Student ID and Access Code';
+    errorEl.style.display = 'block';
+    return;
+  }
+  errorEl.style.display = 'none';
+  try {
+    const q = query(collection(db, 'students'), where('studentId', '==', studentId));
+    const snap = await getDocs(q);
+    if (snap.empty) throw new Error('Student not found');
+    const studentDoc = snap.docs[0];
+    const student = { id: studentDoc.id, ...studentDoc.data() };
+    if (!student.parentAccessCode || student.parentAccessCode !== accessCode) throw new Error('Invalid access code');
+    currentStudent = student;
+    sessionStorage.setItem('edureg_parent', JSON.stringify({ studentId, studentName: student.fullName, accessCode }));
+    await loadStudentData();
+    showParentDashboard();
+  } catch (error) {
+    errorEl.textContent = error.message;
+    errorEl.style.display = 'block';
+  }
+};
+
+window.parentLogout = function() {
+  sessionStorage.removeItem('edureg_parent');
+  currentStudent = null;
+  document.getElementById('parentDashboard').style.display = 'none';
+  document.getElementById('parentLoginScreen').style.display = 'flex';
+  document.getElementById('parentStudentId').value = '';
+  document.getElementById('parentAccessCode').value = '';
+};
+
+function showParentDashboard() {
+  document.getElementById('parentLoginScreen').style.display = 'none';
+  document.getElementById('parentDashboard').style.display = 'block';
+  document.getElementById('parentChildName').textContent = currentStudent.fullName.split(' ')[0];
+  document.getElementById('parentStudentInfo').textContent = `${currentStudent.fullName} · ${currentStudent.studentId} · ${currentStudent.course || '—'}`;
+}
+
+async function loadStudentData() {
+  if (!currentStudent) return;
+  await Promise.all([loadStudentAttendance(), loadParentNotifications()]);
+  updateParentStats();
+  updateParentChart();
+  renderParentRecentAttendance();
+  renderParentHistory();
+  renderParentNotifications();
+  populateParentFilters();
+}
+
+async function loadStudentAttendance() {
+  try {
+    const q = query(collection(db, 'attendance'), where('studentDocId', '==', currentStudent.id), orderBy('markedAt', 'desc'));
+    const snap = await getDocs(q);
+    studentAttendance = [];
+    snap.forEach(doc => studentAttendance.push({ id: doc.id, ...doc.data() }));
+    const sessionIds = [...new Set(studentAttendance.map(a => a.sessionId).filter(s => s))];
+    studentSessions = [];
+    for (const sessionId of sessionIds) {
+      const sessionDoc = await getDoc(doc(db, 'sessions', sessionId));
+      if (sessionDoc.exists()) studentSessions.push({ id: sessionDoc.id, ...sessionDoc.data() });
+    }
+  } catch (error) { console.error('Load attendance error:', error); }
+}
+
+async function loadParentNotifications() {
+  try {
+    const q = query(collection(db, 'notifications'), where('studentId', '==', currentStudent.studentId), orderBy('createdAt', 'desc'));
+    const snap = await getDocs(q);
+    parentNotifications = [];
+    snap.forEach(doc => parentNotifications.push({ id: doc.id, ...doc.data() }));
+  } catch (error) { console.error('Load notifications error:', error); }
+}
+
+function updateParentStats() {
+  const totalClasses = studentSessions.length;
+  const attended = studentAttendance.length;
+  const attendanceRate = totalClasses > 0 ? Math.round((attended / totalClasses) * 100) : 0;
+  const lastAttendance = studentAttendance[0]?.markedAt?.toDate() || null;
+  document.getElementById('parentTotalClasses').textContent = totalClasses;
+  document.getElementById('parentAttended').textContent = attended;
+  document.getElementById('parentAttendanceRate').textContent = `${attendanceRate}%`;
+  document.getElementById('parentLastAttendance').textContent = lastAttendance ? lastAttendance.toLocaleDateString() : 'Never';
+}
+
+function updateParentChart() {
+  const last30Days = [];
+  const attendanceMap = {};
+  studentAttendance.forEach(a => { if (a.markedAt?.toDate) attendanceMap[a.markedAt.toDate().toDateString()] = true; });
+  for (let i = 29; i >= 0; i--) {
+    const date = new Date(); date.setDate(date.getDate() - i);
+    last30Days.push({ date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), attended: attendanceMap[date.toDateString()] ? 1 : 0 });
+  }
+  if (parentAttendanceChart) parentAttendanceChart.destroy();
+  const ctx = document.getElementById('parentAttendanceChart')?.getContext('2d');
+  if (ctx) {
+    parentAttendanceChart = new Chart(ctx, {
+      type: 'bar',
+      data: { labels: last30Days.map(d => d.date), datasets: [{ label: 'Attendance', data: last30Days.map(d => d.attended), backgroundColor: (context) => context.raw === 1 ? '#3ddc6e' : 'rgba(61,220,110,0.2)', borderColor: '#3ddc6e', borderWidth: 1 }] },
+      options: { responsive: true, maintainAspectRatio: true, scales: { y: { beginAtZero: true, max: 1, ticks: { stepSize: 1, callback: (value) => value === 1 ? 'Present' : 'Absent', color: '#e8f0ea' }, grid: { color: '#1e2e22' } }, x: { ticks: { color: '#e8f0ea', maxRotation: 45, minRotation: 45 }, grid: { display: false } } }, plugins: { legend: { labels: { color: '#e8f0ea' } } } }
+    });
+  }
+}
+
+function renderParentRecentAttendance() {
+  const container = document.getElementById('parentRecentAttendance');
+  const recent = studentAttendance.slice(0, 10);
+  if (!recent.length) { container.innerHTML = '<div class="empty-state">No attendance records yet</div>'; return; }
+  container.innerHTML = recent.map(a => {
+    const date = a.markedAt?.toDate ? a.markedAt.toDate().toLocaleString() : '—';
+    return `<div style="padding:12px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;"><div><div style="font-weight:600;">${escapeHtml(a.sessionLabel || a.sessionId?.slice(-8) || 'Class Session')}</div><div style="font-size:12px; color:var(--text-muted);">${escapeHtml(a.module || a.course || '—')}</div></div><div style="text-align:right;"><span class="badge badge-success">Present</span><div style="font-size:11px; color:var(--text-dim);">${date}</div></div></div>`;
+  }).join('');
+}
+
+function renderParentHistory() {
+  const tbody = document.getElementById('parentHistoryTable');
+  const search = document.getElementById('parentHistorySearch')?.value.toLowerCase() || '';
+  const moduleFilter = document.getElementById('parentModuleFilter')?.value || '';
+  let filtered = studentAttendance.filter(a => {
+    const matchSearch = !search || [a.module, a.sessionLabel, a.course].some(v => v && v.toLowerCase().includes(search));
+    return matchSearch && (!moduleFilter || a.module === moduleFilter);
+  });
+  document.getElementById('parentHistoryCount').textContent = filtered.length ? `Showing ${filtered.length} record${filtered.length !== 1 ? 's' : ''}` : '';
+  if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state">No records found</div></td></tr>'; return; }
+  tbody.innerHTML = filtered.map(a => {
+    const date = a.markedAt?.toDate ? a.markedAt.toDate().toLocaleString() : '—';
+    return `<tr><td>${date}</td><td><span class="badge">${escapeHtml(a.module || a.course || '—')}</span></td><td>${escapeHtml(a.sessionLabel || a.sessionId?.slice(-8) || '—')}</td><td><span class="badge badge-success">Present</span></td><td>${escapeHtml(a.lecturerName || '—')}</td></tr>`;
+  }).join('');
+}
+
+function renderParentNotifications() {
+  const container = document.getElementById('parentNotificationsList');
+  if (!parentNotifications.length) { container.innerHTML = '<div class="empty-state">No notifications yet</div>'; return; }
+  container.innerHTML = parentNotifications.map(n => {
+    const date = n.createdAt?.toDate ? n.createdAt.toDate().toLocaleString() : '—';
+    const isRead = n.read || false;
+    return `<div class="notification-item" style="padding:15px; border-bottom:1px solid var(--border); background:${isRead ? 'transparent' : 'rgba(61,220,110,0.05)'}; cursor:pointer;" onclick="markNotificationRead('${n.id}')"><div style="display:flex; gap:12px;"><div style="font-size:20px; color:${n.type === 'warning' ? 'var(--warn)' : 'var(--accent)'}"><i class="fa-solid ${n.type === 'warning' ? 'fa-triangle-exclamation' : 'fa-bell'}"></i></div><div style="flex:1"><div style="font-weight:600;">${escapeHtml(n.title)}</div><div style="font-size:13px; color:var(--text-muted);">${escapeHtml(n.message)}</div><div style="font-size:11px; color:var(--text-dim); margin-top:6px;">${date}</div></div>${!isRead ? '<div style="width:8px; height:8px; background:var(--accent); border-radius:50%;"></div>' : ''}</div></div>`;
+  }).join('');
+}
+
+function populateParentFilters() {
+  const modules = [...new Set(studentAttendance.map(a => a.module).filter(m => m))];
+  const filterSelect = document.getElementById('parentModuleFilter');
+  if (filterSelect) filterSelect.innerHTML = '<option value="">All Modules</option>' + modules.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('');
+}
+
+window.filterParentHistory = () => renderParentHistory();
+window.refreshParentData = () => { loadStudentData(); toast('Data refreshed', 'success'); };
+window.exportChildReport = () => exportAttendanceData();
+window.exportFullAttendance = () => exportAttendanceData();
+
+function exportAttendanceData() {
+  if (!studentAttendance.length) { toast('No attendance data to export', 'warn'); return; }
+  const headers = ['Date & Time', 'Module/Course', 'Session', 'Status', 'Lecturer'];
+  const rows = studentAttendance.map(a => {
+    const date = a.markedAt?.toDate ? a.markedAt.toDate().toLocaleString() : '';
+    return [date, a.module || a.course, a.sessionLabel || a.sessionId, 'Present', a.lecturerName].map(v => `"${(v || '').replace(/"/g, '""')}"`).join(',');
+  });
+  const csv = [headers.join(','), ...rows].join('\n');
+  downloadCSV(csv, `${currentStudent.fullName.replace(/\s/g, '_')}_attendance_report.csv`);
+  toast('Report downloaded!', 'success');
+}
+
+window.markNotificationRead = async function(id) {
+  try { await updateDoc(doc(db, 'notifications', id), { read: true }); await loadParentNotifications(); renderParentNotifications(); toast('Marked as read', 'success'); } catch(e) { console.error(e); }
+};
+
+window.markAllRead = async function() {
+  try { for (const n of parentNotifications) if (!n.read) await updateDoc(doc(db, 'notifications', n.id), { read: true }); await loadParentNotifications(); renderParentNotifications(); toast('All marked as read', 'success'); } catch(e) { console.error(e); }
+};
+
+window.switchParentTab = function(tab) {
+  document.querySelectorAll('.parent-tab').forEach(t => t.style.display = 'none');
+  document.getElementById(`parent${tab.charAt(0).toUpperCase() + tab.slice(1)}Tab`).style.display = 'block';
+  document.querySelectorAll('.nav-drawer .nav-link').forEach(link => link.classList.remove('active'));
+  if (event.target) event.target.classList.add('active');
+};
+
+function downloadCSV(csv, filename) {
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function toggleMenu() {
+  document.getElementById('burgerBtn').classList.toggle('open');
+  document.getElementById('navDrawer').classList.toggle('open');
+}
+
+function escapeHtml(str) { return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function toast(msg, type = 'success') {
+  const icons = { success: '✓', error: '✕', warn: '!' };
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span>${icons[type] || 'i'}</span>${msg}`;
+  document.getElementById('toastContainer').appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3500);
+}
+
+window.addEventListener('load', () => {
+  const saved = sessionStorage.getItem('edureg_parent');
+  if (saved) {
+    try {
+      const data = JSON.parse(saved);
+      document.getElementById('parentStudentId').value = data.studentId;
+      document.getElementById('parentAccessCode').value = data.accessCode;
+      parentLogin();
+    } catch(e) {}
+  }
+});
+
+window.toggleMenu = toggleMenu;
+</script>
+<style>
+.parent-tab { animation: fadeIn 0.3s ease; }
+.notification-item { transition: background 0.2s; }
+.notification-item:hover { background: var(--surface2); }
+.badge-success { background: rgba(61,220,110,0.2); color: var(--accent); }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</body>
+</html>
