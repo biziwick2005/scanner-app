@@ -8,8 +8,8 @@
   <title>Admin — EduReg</title>
   <link rel="stylesheet" href="style.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
-  <!-- Use stable QR code library -->
-  <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+  <!-- USE KIRITO QR CODE - MOST RELIABLE -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
@@ -263,38 +263,27 @@ window._fbReady=true;
 </script>
 
 <script>
-// ─────────────────────────────────────────────
-// ADMIN PASSWORD
 const ADMIN_PASSWORD = "admin1234";
-// ─────────────────────────────────────────────
-
 let allStudents=[], allAttendance=[], selectedDocId=null;
 let sessionTimerInterval=null, liveUnsubscribe=null, currentSessionId=null;
-let currentQRCode = null;
+let currentQR = null;
 
-// ── LIGHTBOX ─────────────────────────────────
 function openLightbox(src){ if(!src)return; document.getElementById('lightboxImg').src=src; document.getElementById('lightboxBackdrop').classList.add('show'); document.body.style.overflow='hidden'; }
 function closeLightbox(){ document.getElementById('lightboxBackdrop').classList.remove('show'); document.body.style.overflow=''; }
 window.openLightbox=openLightbox; window.closeLightbox=closeLightbox;
-document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeLightbox(); });
 
-// ── AUTH ─────────────────────────────────────
 function checkPassword(){ const pw=document.getElementById('passwordInput').value; if(pw===ADMIN_PASSWORD){ sessionStorage.setItem('edureg_admin','1'); showAdmin(); } else { document.getElementById('loginError').style.display='block'; document.getElementById('passwordInput').value=''; document.getElementById('passwordInput').focus(); } }
 window.checkPassword=checkPassword;
 function showAdmin(){ document.getElementById('loginScreen').style.display='none'; document.getElementById('adminScreen').style.display='block'; loadAll(); }
 function logout(){ sessionStorage.removeItem('edureg_admin'); location.reload(); }
 window.logout=logout;
-window.addEventListener('load',()=>{ if(sessionStorage.getItem('edureg_admin')==='1') showAdmin(); });
 
-// ── NAV ──────────────────────────────────────
 function toggleMenu(){ const b=document.getElementById('burgerBtn'),d=document.getElementById('navDrawer'); b.classList.toggle('open'); d.classList.toggle('open'); }
 window.toggleMenu=toggleMenu;
 
-// ── TABS ─────────────────────────────────────
 function switchTab(name,btn){ document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active')); btn.classList.add('active'); document.getElementById('tab-'+name).classList.add('active'); }
 window.switchTab=switchTab;
 
-// ── LOAD ALL DATA ─────────────────────────────
 async function loadAll(){
   const wait=()=>new Promise(r=>{ if(window._fbReady)return r(); const iv=setInterval(()=>{ if(window._fbReady){clearInterval(iv);r();}},300); });
   await wait();
@@ -329,15 +318,12 @@ async function loadAttendance(){
   } catch(e){ document.getElementById('attendanceTable').innerHTML='<tr><td colspan="5"><div class="empty-state"><p>Error: '+e.message+'</p></div></td></tr>'; }
 }
 
-// ── RENDER STUDENTS ───────────────────────────
 function renderStudents(students){
   const tbody=document.getElementById('studentsTable');
-  document.getElementById('resultCount').textContent=students.length?`Showing ${students.length} student${students.length!==1?'s':''}`:'' ;
+  document.getElementById('resultCount').textContent=students.length?`Showing ${students.length} student${students.length!==1?'s':''}`:'';
   if(!students.length){ tbody.innerHTML='<tr><td colspan="7"><div class="empty-state"><div style="font-size:28px;"><i class="fa-solid fa-user-slash"></i></div><p>No students found.</p></div></td></tr>'; return; }
   tbody.innerHTML=students.map(s=>{
-    const avatar=s.photoURL
-      ?`<img class="td-avatar" src="${s.photoURL}" alt="${esc(s.fullName)}" style="object-fit:cover;cursor:zoom-in;" onclick="openLightbox('${s.photoURL}')" title="View photo"/>`
-      :`<div class="td-avatar" style="display:flex;align-items:center;justify-content:center;color:var(--text-dim);"><i class="fa-solid fa-user"></i></div>`;
+    const avatar=s.photoURL?`<img class="td-avatar" src="${s.photoURL}" alt="${esc(s.fullName)}" style="object-fit:cover;cursor:zoom-in;" onclick="openLightbox('${s.photoURL}')" title="View photo"/>`:`<div class="td-avatar" style="display:flex;align-items:center;justify-content:center;color:var(--text-dim);"><i class="fa-solid fa-user"></i></div>`;
     const date=s.registeredAt?.toDate?s.registeredAt.toDate().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';
     return `<tr>
       <td class="col-name" data-label="Student"><div class="td-name">${avatar}<div><div class="td-name-text">${esc(s.fullName)}</div><div class="td-id">${esc(s.studentId)}</div></div></div></td>
@@ -351,15 +337,12 @@ function renderStudents(students){
   }).join('');
 }
 
-// ── RENDER ATTENDANCE ─────────────────────────
 function renderAttendance(records){
   const tbody=document.getElementById('attendanceTable');
-  document.getElementById('attCount').textContent=records.length?`${records.length} record${records.length!==1?'s':''}`:'' ;
+  document.getElementById('attCount').textContent=records.length?`${records.length} record${records.length!==1?'s':''}`:'';
   if(!records.length){ tbody.innerHTML='<tr><td colspan="5"><div class="empty-state"><div style="font-size:28px;"><i class="fa-solid fa-clipboard"></i></div><p>No attendance records yet.</p></div></td></tr>'; return; }
   tbody.innerHTML=records.map(r=>{
-    const avatar=r.photoURL
-      ?`<img class="td-avatar" src="${r.photoURL}" alt="${esc(r.fullName)}" style="object-fit:cover;cursor:zoom-in;" onclick="openLightbox('${r.photoURL}')" title="View photo"/>`
-      :`<div class="td-avatar" style="display:flex;align-items:center;justify-content:center;color:var(--text-dim);"><i class="fa-solid fa-user"></i></div>`;
+    const avatar=r.photoURL?`<img class="td-avatar" src="${r.photoURL}" alt="${esc(r.fullName)}" style="object-fit:cover;cursor:zoom-in;" onclick="openLightbox('${r.photoURL}')" title="View photo"/>`:`<div class="td-avatar" style="display:flex;align-items:center;justify-content:center;color:var(--text-dim);"><i class="fa-solid fa-user"></i></div>`;
     const time=r.markedAt?.toDate?r.markedAt.toDate().toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'—';
     return `<tr>
       <td data-label="Student"><div class="td-name">${avatar}<div><div class="td-name-text">${esc(r.fullName)}</div><div class="td-id">${esc(r.studentId)}</div></div></div></td>
@@ -371,7 +354,6 @@ function renderAttendance(records){
   }).join('');
 }
 
-// ── FILTERS ───────────────────────────────────
 function filterStudents(){
   const q=document.getElementById('searchInput').value.toLowerCase();
   const crs=document.getElementById('courseFilter').value;
@@ -387,7 +369,6 @@ function filterAttendance(){
 }
 window.filterAttendance=filterAttendance;
 
-// ── STATS ──────────────────────────────────────
 function updateStats(){
   document.getElementById('statTotal').textContent=allStudents.length;
   const today=new Date().toDateString();
@@ -399,7 +380,7 @@ function updateStats(){
   if(allStudents[0]) document.getElementById('statLatest').textContent=allStudents[0].fullName?.split(' ')[0]||'—';
 }
 
-// ── QR GENERATOR - COMPLETELY FIXED ──────────────
+// WORKING QR GENERATION
 function generateQR() {
   const label = document.getElementById('sessionLabel').value.trim() || 'Class Session';
   const duration = parseInt(document.getElementById('sessionDuration').value) || 10;
@@ -409,59 +390,35 @@ function generateQR() {
     type: 'edureg_session',
     id: currentSessionId,
     label: label,
-    expires: expires,
-    timestamp: Date.now()
+    expires: expires
   });
   
-  // Show QR result section
   document.getElementById('qrResult').style.display = 'block';
   document.getElementById('qrSessionLabel').textContent = label;
   document.getElementById('qrSessionInfo').textContent = `Valid for ${duration} min · Session ID: ${currentSessionId.slice(-8)}`;
   
-  // Clear container
   const container = document.getElementById('qrContainer');
   container.innerHTML = '';
   
-  // Create QR code using HTML5 Canvas (built-in method)
-  const canvas = document.createElement('canvas');
-  canvas.width = 220;
-  canvas.height = 220;
-  canvas.style.width = '220px';
-  canvas.style.height = '220px';
-  container.appendChild(canvas);
-  
-  // Generate QR code using QRCode library
-  if (typeof QRCode !== 'undefined') {
-    QRCode.toCanvas(canvas, payload, { width: 220, margin: 1 }, function(error) {
-      if (error) {
-        console.error('QR generation error:', error);
-        generateFallbackQR(canvas, payload);
-      } else {
-        toast('QR code generated!', 'success');
-      }
+  // Create QR code using the loaded QRCode library
+  try {
+    new QRCode(container, {
+      text: payload,
+      width: 200,
+      height: 200,
+      colorDark: "#000000",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.M
     });
-  } else {
-    // Fallback: generate simple QR using canvas
-    generateFallbackQR(canvas, payload);
+    toast('QR code generated!', 'success');
+  } catch(e) {
+    console.error('QR error:', e);
+    container.innerHTML = '<div style="color:var(--danger);text-align:center;">⚠️ QR Error</div>';
+    toast('QR generation failed', 'error');
   }
   
   startSessionTimer(expires, duration);
   startLiveFeed(currentSessionId);
-}
-
-function generateFallbackQR(canvas, text) {
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, 0, 220, 220);
-  ctx.fillStyle = '#000000';
-  ctx.font = 'bold 16px monospace';
-  ctx.fillText('QR CODE', 65, 100);
-  ctx.font = '10px monospace';
-  const shortText = text.length > 30 ? text.substring(0, 27) + '...' : text;
-  ctx.fillText(shortText, 10, 150);
-  ctx.fillText('Scan with', 10, 180);
-  ctx.fillText('EduReg app', 10, 200);
-  toast('QR library loading, using fallback', 'warn');
 }
 
 function startSessionTimer(expires, totalMin) {
@@ -528,7 +485,6 @@ window.stopSession = function() {
   toast('Session stopped.', 'warn');
 };
 
-// ── MODAL ──────────────────────────────────────
 window.openModal = function(id) {
   const s = allStudents.find(x => x.id === id);
   if (!s) return;
@@ -564,7 +520,6 @@ window.closeModal = function(e) {
   selectedDocId = null;
 };
 
-// ── DELETE ─────────────────────────────────────
 window.deleteStudent = function() {
   document.getElementById('modalBackdrop').classList.remove('show');
   document.getElementById('confirmBackdrop').classList.add('show');
@@ -596,12 +551,8 @@ window.confirmDelete = async function() {
   }
 };
 
-// ── EXPORT ─────────────────────────────────────
 window.exportCSV = function() {
-  if (!allStudents.length) {
-    toast('No students.', 'warn');
-    return;
-  }
+  if (!allStudents.length) { toast('No students.', 'warn'); return; }
   const h = ['Full Name', 'Student ID', 'Course', 'Year', 'Date of Birth', 'Email', 'Phone', 'Registered'];
   const rows = allStudents.map(s => {
     const date = s.registeredAt?.toDate ? s.registeredAt.toDate().toLocaleDateString('en-GB') : '';
@@ -612,10 +563,7 @@ window.exportCSV = function() {
 };
 
 window.exportAttendanceCSV = function() {
-  if (!allAttendance.length) {
-    toast('No records.', 'warn');
-    return;
-  }
+  if (!allAttendance.length) { toast('No records.', 'warn'); return; }
   const h = ['Full Name', 'Student ID', 'Course', 'Year', 'Module', 'Session', 'Status', 'Time'];
   const rows = allAttendance.map(r => {
     const time = r.markedAt?.toDate ? r.markedAt.toDate().toLocaleString('en-GB') : '';
@@ -632,10 +580,10 @@ function dl(csv, name) {
   a.click();
 }
 
-// Set default date for session
 window.addEventListener('load', () => {
   const d = document.getElementById('sessionDate');
   if (d) d.valueAsDate = new Date();
+  if (sessionStorage.getItem('edureg_admin') === '1') showAdmin();
 });
 
 function esc(s) {
