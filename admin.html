@@ -174,7 +174,7 @@
             <h3 id="qrSessionLabel">Session QR</h3>
             <p id="qrSessionInfo">Show this to your students</p>
             <div style="display:flex;justify-content:center;margin:16px 0;">
-              <div class="qr-display"><img id="qrImg" src="" alt="QR Code" style="width:220px;height:220px;display:block;border-radius:4px;"/></div>
+              <div class="qr-display"><div id="qrContainer" style="width:220px;height:220px;"></div></div>
             </div>
             <div class="session-timer" id="sessionTimer">10:00</div>
             <p style="font-size:12px;color:var(--text-dim);">QR expires when timer reaches 0:00</p>
@@ -258,7 +258,7 @@ window._orderBy=orderBy; window._where=where; window._onSnapshot=onSnapshot;
 window._fbReady=true;
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
 <script>
 // ─────────────────────────────────────────────
@@ -397,6 +397,7 @@ function updateStats(){
 }
 
 // ── QR GENERATOR ──────────────────────────────
+let qrInstance = null;
 window.generateQR=function(){
   const label=document.getElementById('sessionLabel').value.trim()||'Class Session';
   const duration=parseInt(document.getElementById('sessionDuration').value)||10;
@@ -405,12 +406,22 @@ window.generateQR=function(){
   const payload=JSON.stringify({type:'edureg_session',id:currentSessionId,label,expires});
   document.getElementById('qrResult').style.display='block';
   document.getElementById('qrSessionLabel').textContent=label;
-  document.getElementById('qrSessionInfo').textContent=`Valid for ${duration} minutes · Session ID: ${currentSessionId.slice(-6)}`;
-  // Use QRCode.toDataURL for reliable rendering
-  QRCode.toDataURL(payload,{width:220,margin:2,color:{dark:'#000000',light:'#ffffff'}},function(err,url){
-    if(err){ toast('QR error: '+err.message,'error'); return; }
-    document.getElementById('qrImg').src=url;
-  });
+  document.getElementById('qrSessionInfo').textContent=`Valid for ${duration} min · Session ID: ${currentSessionId.slice(-6)}`;
+
+  // Clear previous QR
+  const container = document.getElementById('qrContainer');
+  container.innerHTML = '';
+  try {
+    qrInstance = new QRCode(container, {
+      text: payload,
+      width: 220,
+      height: 220,
+      colorDark: '#000000',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  } catch(e) { toast('QR error: '+e.message, 'error'); }
+
   startSessionTimer(expires, duration);
   startLiveFeed(currentSessionId);
 };
@@ -444,7 +455,13 @@ function startLiveFeed(sessionId){
   });
 }
 
-window.regenerateQR=function(){ if(liveUnsubscribe)liveUnsubscribe(); if(sessionTimerInterval)clearInterval(sessionTimerInterval); document.getElementById('qrResult').style.display='none'; window.generateQR(); };
+window.regenerateQR=function(){
+  if(liveUnsubscribe)liveUnsubscribe();
+  if(sessionTimerInterval)clearInterval(sessionTimerInterval);
+  document.getElementById('qrResult').style.display='none';
+  document.getElementById('qrContainer').innerHTML='';
+  window.generateQR();
+};
 window.stopSession=function(){ if(liveUnsubscribe)liveUnsubscribe(); if(sessionTimerInterval)clearInterval(sessionTimerInterval); document.getElementById('qrResult').style.display='none'; toast('Session stopped.','warn'); };
 
 // ── MODAL ──────────────────────────────────────
