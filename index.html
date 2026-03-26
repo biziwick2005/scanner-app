@@ -3,173 +3,131 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Student Registration</title>
+  <meta name="theme-color" content="#3ddc6e"/>
+  <meta name="description" content="Face-verified student registration system"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="apple-touch-icon" href="icon-192.png"/>
+  <title>EduReg — Student Registration</title>
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 
 <nav class="nav">
   <div class="nav-inner">
-    <a href="index.html" class="nav-logo">
-      <span class="nav-logo-dot"></span>
-      EduReg
-    </a>
-    <a href="admin.html" class="nav-link">Admin Panel →</a>
+    <a href="index.html" class="nav-logo"><span class="nav-logo-dot"></span>EduReg</a>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link active">Register</a>
+      <a href="attendance.html" class="nav-link">Attendance</a>
+      <a href="about.html" class="nav-link">About</a>
+      <a href="admin.html" class="nav-link">Admin →</a>
+    </div>
+    <button class="nav-burger" id="burgerBtn" onclick="toggleMenu()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </nav>
+<div class="nav-drawer" id="navDrawer">
+  <a href="index.html" class="nav-link active">📋 Register</a>
+  <a href="attendance.html" class="nav-link">✅ Attendance</a>
+  <a href="about.html" class="nav-link">👤 About</a>
+  <a href="admin.html" class="nav-link">🔒 Admin Panel</a>
+</div>
 
-<div class="container" style="padding-top:0;">
-
-  <!-- HERO -->
+<div class="container" style="padding-bottom:80px;">
   <div class="hero">
-    <div class="hero-badge">
-      <span class="nav-logo-dot" style="width:6px;height:6px;"></span>
-      Face-Verified Registration
-    </div>
+    <div class="hero-badge"><span class="nav-logo-dot" style="width:6px;height:6px;"></span>Face-Verified Registration</div>
     <h1>Register as a<br/><span>Student</span></h1>
-    <p>Scan your face to get started. We'll check for duplicate entries and securely store your details.</p>
+    <p>Scan your face to get started. We'll check for duplicates and securely save your details.</p>
   </div>
 
-  <!-- STEPS -->
   <div class="steps" id="stepsBar">
-    <div class="step active" id="step-tab-1"><span class="step-num">1</span>Face Scan</div>
-    <div class="step" id="step-tab-2"><span class="step-num">2</span>Your Details</div>
-    <div class="step" id="step-tab-3"><span class="step-num">3</span>Confirm</div>
+    <div class="step active" id="step-tab-1"><span class="step-num">1</span><span class="step-label">Face Scan</span></div>
+    <div class="step" id="step-tab-2"><span class="step-num">2</span><span class="step-label">Details</span></div>
+    <div class="step" id="step-tab-3"><span class="step-num">3</span><span class="step-label">Confirm</span></div>
   </div>
 
-  <!-- DUPLICATE ALERT -->
-  <div class="duplicate-alert" id="duplicateAlert">
-    <div class="duplicate-alert-icon">⚠️</div>
-    <div>
-      <h4>Duplicate Registration Detected</h4>
-      <p id="duplicateMsg">A student with a similar face is already registered in the system.</p>
-    </div>
+  <div class="alert alert-danger" id="duplicateAlert">
+    <span class="alert-icon">⚠️</span>
+    <div><h4>Duplicate Registration</h4><p id="duplicateMsg">A student with this face is already registered.</p></div>
   </div>
 
   <!-- STEP 1: CAMERA -->
-  <div id="stepCamera" class="card card--glow" style="margin-bottom:32px;">
+  <div id="stepCamera" class="card card--glow" style="margin-bottom:24px;">
     <div style="text-align:center;">
-      <h2 style="font-size:20px;margin-bottom:6px;">Step 1 — Face Scan</h2>
-      <p style="color:var(--text-muted);font-size:14px;margin-bottom:24px;">Position your face within the circle. Hold still for a moment.</p>
-
+      <h2 style="font-size:19px;margin-bottom:5px;">Step 1 — Face Scan</h2>
+      <p style="color:var(--text-muted);font-size:13px;margin-bottom:20px;">Position your face in the frame and hold still.</p>
       <div class="camera-wrap" id="cameraWrap">
         <video id="video" autoplay muted playsinline></video>
         <canvas id="overlay"></canvas>
-
         <div class="camera-overlay" id="cameraOverlay">
           <div class="camera-scan-ring"></div>
-          <p class="camera-status" id="cameraStatus">Starting camera...</p>
+          <p class="camera-status" id="cameraStatus">Starting camera…</p>
         </div>
-
         <div class="face-detected-bar" id="faceBar">
-          <div class="face-dot"></div>
-          <span id="faceBarText">Face detected — hold still</span>
+          <div class="face-dot"></div><span id="faceBarText">Face detected</span>
         </div>
       </div>
-
-      <div style="display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;">
-        <img id="photoPreview" class="photo-preview" src="" alt="Captured photo"/>
+      <div style="display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;margin-top:4px;">
+        <img id="photoPreview" class="photo-preview" src="" alt=""/>
         <div>
           <button class="btn btn-primary" id="captureBtn" disabled>
-            <span id="captureBtnText">Waiting for face...</span>
+            <span id="captureBtnText">Waiting for face…</span>
           </button>
-          <p style="font-size:12px;color:var(--text-dim);margin-top:8px;" id="captureHint">Camera is loading face detection models…</p>
+          <p style="font-size:12px;color:var(--text-dim);margin-top:6px;" id="captureHint">Loading AI models…</p>
         </div>
       </div>
     </div>
   </div>
 
   <!-- STEP 2: FORM -->
-  <div id="stepForm" class="card card--glow" style="margin-bottom:32px;display:none;">
-    <h2 style="font-size:20px;margin-bottom:6px;">Step 2 — Your Details</h2>
-    <p style="color:var(--text-muted);font-size:14px;margin-bottom:24px;">Fill in your information below. All fields are required.</p>
-
+  <div id="stepForm" class="card card--glow" style="margin-bottom:24px;display:none;">
+    <h2 style="font-size:19px;margin-bottom:5px;">Step 2 — Your Details</h2>
+    <p style="color:var(--text-muted);font-size:13px;margin-bottom:20px;">All fields are required.</p>
     <form id="regForm" onsubmit="return false;">
       <div class="form-grid">
-
-        <div class="field full">
-          <label>Full Name</label>
-          <input type="text" id="fullName" placeholder="e.g. Amara Banda" required/>
-        </div>
-
-        <div class="field">
-          <label>Student ID</label>
-          <input type="text" id="studentId" placeholder="e.g. STU-2024-001" required/>
-        </div>
-
-        <div class="field">
-          <label>Date of Birth</label>
-          <input type="date" id="dob" required/>
-        </div>
-
-        <div class="field">
-          <label>Email Address</label>
-          <input type="email" id="email" placeholder="student@university.edu" required/>
-        </div>
-
-        <div class="field">
-          <label>Phone Number</label>
-          <input type="tel" id="phone" placeholder="+265 999 000 000" required/>
-        </div>
-
+        <div class="field full"><label>Full Name</label><input type="text" id="fullName" placeholder="e.g. Amara Banda" required/></div>
+        <div class="field"><label>Student ID</label><input type="text" id="studentId" placeholder="e.g. STU-2024-001" required/></div>
+        <div class="field"><label>Date of Birth</label><input type="date" id="dob" required/></div>
+        <div class="field"><label>Email Address</label><input type="email" id="email" placeholder="student@uni.edu" required/></div>
+        <div class="field"><label>Phone Number</label><input type="tel" id="phone" placeholder="+265 999 000 000" required/></div>
         <div class="field">
           <label>Course / Program</label>
           <select id="course" required>
             <option value="">Select course…</option>
-            <option>Computer Science</option>
-            <option>Information Technology</option>
-            <option>Business Administration</option>
-            <option>Accounting & Finance</option>
-            <option>Nursing</option>
-            <option>Engineering</option>
-            <option>Education</option>
-            <option>Law</option>
-            <option>Medicine</option>
-            <option>Agriculture</option>
-            <option>Other</option>
+            <option>Computer Science</option><option>Information Technology</option>
+            <option>Business Administration</option><option>Accounting &amp; Finance</option>
+            <option>Nursing</option><option>Engineering</option><option>Education</option>
+            <option>Law</option><option>Medicine</option><option>Agriculture</option><option>Other</option>
           </select>
         </div>
-
         <div class="field">
           <label>Year of Study</label>
           <select id="year" required>
             <option value="">Select year…</option>
-            <option>Year 1</option>
-            <option>Year 2</option>
-            <option>Year 3</option>
-            <option>Year 4</option>
-            <option>Year 5</option>
-            <option>Postgraduate</option>
+            <option>Year 1</option><option>Year 2</option><option>Year 3</option>
+            <option>Year 4</option><option>Year 5</option><option>Postgraduate</option>
           </select>
         </div>
-
       </div>
-
       <hr class="divider"/>
-
-      <div style="display:flex;gap:12px;justify-content:flex-end;">
-        <button class="btn btn-outline" onclick="goBack()">← Re-scan Face</button>
-        <button class="btn btn-primary" id="proceedBtn" onclick="goToConfirm()">
-          Review & Confirm →
-        </button>
+      <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;">
+        <button class="btn btn-outline" onclick="goBack()">← Re-scan</button>
+        <button class="btn btn-primary" onclick="goToConfirm()">Review →</button>
       </div>
     </form>
   </div>
 
   <!-- STEP 3: CONFIRM -->
-  <div id="stepConfirm" class="card card--glow" style="margin-bottom:32px;display:none;">
-    <h2 style="font-size:20px;margin-bottom:6px;">Step 3 — Confirm Registration</h2>
-    <p style="color:var(--text-muted);font-size:14px;margin-bottom:24px;">Please review your details before submitting.</p>
-
-    <div style="display:flex;align-items:flex-start;gap:24px;flex-wrap:wrap;margin-bottom:28px;">
-      <img id="confirmPhoto" src="" style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:2px solid var(--accent);box-shadow:0 0 20px var(--accent-glow);flex-shrink:0;" alt=""/>
-      <div class="detail-grid" id="confirmDetails" style="flex:1;min-width:260px;"></div>
+  <div id="stepConfirm" class="card card--glow" style="margin-bottom:24px;display:none;">
+    <h2 style="font-size:19px;margin-bottom:5px;">Step 3 — Confirm</h2>
+    <p style="color:var(--text-muted);font-size:13px;margin-bottom:20px;">Review your details before submitting.</p>
+    <div style="display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap;margin-bottom:22px;">
+      <img id="confirmPhoto" src="" style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:2px solid var(--accent);box-shadow:0 0 20px var(--accent-glow);flex-shrink:0;" alt=""/>
+      <div class="detail-grid" id="confirmDetails" style="flex:1;min-width:240px;"></div>
     </div>
-
     <hr class="divider"/>
-
-    <div style="display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap;">
-      <button class="btn btn-outline" onclick="goToForm()">← Edit Details</button>
+    <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;">
+      <button class="btn btn-outline" onclick="window.goToForm()">← Edit</button>
       <button class="btn btn-primary" id="submitBtn" onclick="submitRegistration()">
         <span id="submitBtnText">Submit Registration</span>
       </button>
@@ -180,25 +138,29 @@
   <div id="stepSuccess" class="success-screen">
     <div class="success-icon">✓</div>
     <h2>Registration Complete!</h2>
-    <p>Welcome to the system. Your details have been securely saved.</p>
+    <p>Your details have been securely saved.</p>
     <button class="btn btn-primary" onclick="resetAll()">Register Another Student</button>
   </div>
-
 </div>
 
-<!-- TOAST CONTAINER -->
+<!-- PWA INSTALL BANNER -->
+<div class="pwa-banner" id="pwaBanner">
+  <div class="pwa-banner-icon">🎓</div>
+  <div class="pwa-banner-text">
+    <strong>Install EduReg</strong>
+    <span>Add to home screen for quick access</span>
+  </div>
+  <div class="pwa-banner-actions">
+    <button class="btn btn-outline btn-sm pwa-dismiss" onclick="dismissPWA()">Not now</button>
+    <button class="btn btn-primary btn-sm" onclick="installPWA()">Install</button>
+  </div>
+</div>
+
 <div class="toast-container" id="toastContainer"></div>
 
-<!-- FIREBASE -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, serverTimestamp }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-// ─────────────────────────────────────────────────────────
-// 🔧 REPLACE WITH YOUR FIREBASE CONFIG
-// ────────────────────────────────────────────────────────
-// ─────────────────────────────────────────────────────────
+import { getFirestore, collection, addDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey:            "AIzaSyCV14myKfUZm0JEym8dB6879ywbGrCO0sE",
@@ -209,340 +171,168 @@ const firebaseConfig = {
   appId:             "1:868892427867:web:619d6a6591f003d0e6217e"
 };
 
+
 const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
-window._db = db;
-window._collection = collection;
-window._addDoc = addDoc;
-window._getDocs = getDocs;
-window._serverTimestamp = serverTimestamp;
-window._firebaseReady = true;
-console.log("Firebase ready — no Storage needed");
+window._db = db; window._col = collection; window._add = addDoc;
+window._getDocs = getDocs; window._ts = serverTimestamp; window._fbReady = true;
 </script>
 
-<!-- FACE-API -->
 <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 
 <script>
-// ── STATE ──────────────────────────────────────────────────
-let stream = null;
-let capturedDescriptor = null;
-let capturedPhotoDataUrl = null;
-let detectionInterval = null;
-let faceDetected = false;
-let modelsLoaded = false;
-let storedDescriptors = [];
+// ── PWA ─────────────────────────────────────────
+let deferredPrompt = null;
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredPrompt = e;
+  if (!localStorage.getItem('pwa_dismissed')) {
+    setTimeout(() => document.getElementById('pwaBanner').classList.add('show'), 2000);
+  }
+});
+function installPWA() { if (!deferredPrompt) return; deferredPrompt.prompt(); deferredPrompt.userChoice.then(() => { deferredPrompt=null; document.getElementById('pwaBanner').classList.remove('show'); }); }
+function dismissPWA() { document.getElementById('pwaBanner').classList.remove('show'); localStorage.setItem('pwa_dismissed','1'); }
+window.installPWA = installPWA; window.dismissPWA = dismissPWA;
 
+// ── NAV ─────────────────────────────────────────
+function toggleMenu() {
+  const btn = document.getElementById('burgerBtn');
+  const drawer = document.getElementById('navDrawer');
+  btn.classList.toggle('open'); drawer.classList.toggle('open');
+}
+window.toggleMenu = toggleMenu;
+document.getElementById('navDrawer').querySelectorAll('.nav-link').forEach(l => l.addEventListener('click', () => { document.getElementById('burgerBtn').classList.remove('open'); document.getElementById('navDrawer').classList.remove('open'); }));
+
+// ── STATE ────────────────────────────────────────
+let stream=null, capturedDescriptor=null, capturedPhotoDataUrl=null;
+let detectionInterval=null, faceDetected=false, modelsLoaded=false, storedDescriptors=[];
 const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.14/model/';
 
-// ── DOM ────────────────────────────────────────────────────
-const video       = document.getElementById('video');
-const overlay     = document.getElementById('overlay');
-const captureBtn  = document.getElementById('captureBtn');
-const captureTxt  = document.getElementById('captureBtnText');
-const captureHint = document.getElementById('captureHint');
-const cameraOverlay = document.getElementById('cameraOverlay');
-const faceBar     = document.getElementById('faceBar');
-const faceBarText = document.getElementById('faceBarText');
-const cameraStatus = document.getElementById('cameraStatus');
-const photoPreview = document.getElementById('photoPreview');
+const video=document.getElementById('video'), overlay=document.getElementById('overlay');
+const captureBtn=document.getElementById('captureBtn'), captureTxt=document.getElementById('captureBtnText');
+const captureHint=document.getElementById('captureHint'), cameraOverlay=document.getElementById('cameraOverlay');
+const faceBar=document.getElementById('faceBar'), cameraStatus=document.getElementById('cameraStatus');
+const photoPreview=document.getElementById('photoPreview');
 
-// ── INIT ────────────────────────────────────────────────────
-window.addEventListener('load', async () => {
-  await loadModels();
-  await startCamera();
-  await loadStoredDescriptors();
-});
+window.addEventListener('load', async () => { await loadModels(); await startCamera(); await loadStoredDescriptors(); });
 
 async function loadModels() {
   cameraStatus.textContent = 'Loading AI models…';
   try {
-    await Promise.all([
-      faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-      faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-      faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
-    ]);
-    modelsLoaded = true;
-    captureHint.textContent = 'Models ready. Position your face in the camera.';
-    cameraStatus.textContent = 'Position your face in the circle';
-  } catch(e) {
-    captureHint.textContent = 'Could not load face detection. Check internet connection.';
-    cameraStatus.textContent = 'Model load failed';
-    console.error(e);
-  }
+    await Promise.all([faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL), faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL), faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)]);
+    modelsLoaded=true; captureHint.textContent='Ready. Position your face.'; cameraStatus.textContent='Position your face in the circle';
+  } catch(e) { captureHint.textContent='Model load failed. Check internet.'; }
 }
 
 async function startCamera() {
   try {
-    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode:'user', width:640, height:480 } });
-    video.srcObject = stream;
-    video.addEventListener('play', startDetectionLoop);
-  } catch(e) {
-    cameraStatus.textContent = 'Camera access denied';
-    captureHint.textContent = 'Please allow camera access and refresh the page.';
-  }
+    stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:640,height:480}});
+    video.srcObject=stream; video.addEventListener('play', startDetectionLoop);
+  } catch(e) { cameraStatus.textContent='Camera denied. Please allow access.'; }
 }
 
 async function loadStoredDescriptors() {
-  if (!window._firebaseReady) {
-    setTimeout(loadStoredDescriptors, 500);
-    return;
-  }
+  const wait=()=>new Promise(r=>{ if(window._fbReady)return r(); const iv=setInterval(()=>{ if(window._fbReady){clearInterval(iv);r();}},300); });
+  await wait();
   try {
-    const snap = await window._getDocs(window._collection(window._db, 'students'));
-    storedDescriptors = [];
-    snap.forEach(doc => {
-      const d = doc.data();
-      if (d.descriptor) {
-        storedDescriptors.push({
-          id: doc.id,
-          name: d.fullName,
-          studentId: d.studentId,
-          descriptor: new Float32Array(Object.values(d.descriptor))
-        });
-      }
-    });
-  } catch(e) { console.warn('Could not load descriptors:', e); }
+    const snap=await window._getDocs(window._col(window._db,'students'));
+    storedDescriptors=[];
+    snap.forEach(d=>{ const data=d.data(); if(data.descriptor) storedDescriptors.push({id:d.id,name:data.fullName,studentId:data.studentId,descriptor:new Float32Array(Object.values(data.descriptor))}); });
+  } catch(e) { console.warn('Could not load descriptors',e); }
 }
 
-// ── FACE DETECTION LOOP ────────────────────────────────────
 function startDetectionLoop() {
-  if (!modelsLoaded) { setTimeout(startDetectionLoop, 500); return; }
-  overlay.width  = video.videoWidth;
-  overlay.height = video.videoHeight;
-
-  detectionInterval = setInterval(async () => {
-    if (!modelsLoaded || video.paused || video.ended) return;
-    const det = await faceapi
-      .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
-      .withFaceLandmarks()
-      .withFaceDescriptor();
-
-    const ctx = overlay.getContext('2d');
-    ctx.clearRect(0, 0, overlay.width, overlay.height);
-
-    if (det) {
-      faceDetected = true;
-      cameraOverlay.classList.add('hidden');
-      faceBar.classList.add('show');
-      faceBarText.textContent = 'Face detected — ready to capture';
-      captureBtn.disabled = false;
-      captureTxt.textContent = 'Capture Photo';
-      captureHint.textContent = 'Face is clear. Click to capture.';
-
-      // Draw face box
-      const box = det.detection.box;
-      ctx.strokeStyle = '#3ddc6e';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(box.x, box.y, box.width, box.height);
-      // Corner accents
-      const cs = 14;
-      ctx.fillStyle = '#3ddc6e';
-      [[box.x,box.y],[box.x+box.width-cs,box.y],[box.x,box.y+box.height-cs],[box.x+box.width-cs,box.y+box.height-cs]].forEach(([x,y]) => {
-        ctx.fillRect(x, y, cs, 2);
-        ctx.fillRect(x, y, 2, cs);
-      });
+  if(!modelsLoaded){setTimeout(startDetectionLoop,500);return;}
+  overlay.width=video.videoWidth; overlay.height=video.videoHeight;
+  detectionInterval=setInterval(async()=>{
+    if(!modelsLoaded||video.paused||video.ended)return;
+    const det=await faceapi.detectSingleFace(video,new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+    const ctx=overlay.getContext('2d'); ctx.clearRect(0,0,overlay.width,overlay.height);
+    if(det){
+      faceDetected=true; cameraOverlay.classList.add('hidden'); faceBar.classList.add('show');
+      captureBtn.disabled=false; captureTxt.textContent='Capture Photo'; captureHint.textContent='Face clear — click to capture.';
+      const b=det.detection.box; ctx.strokeStyle='#3ddc6e'; ctx.lineWidth=2; ctx.strokeRect(b.x,b.y,b.width,b.height);
+      const cs=12; ctx.fillStyle='#3ddc6e';
+      [[b.x,b.y],[b.x+b.width-cs,b.y],[b.x,b.y+b.height-cs],[b.x+b.width-cs,b.y+b.height-cs]].forEach(([x,y])=>{ctx.fillRect(x,y,cs,2);ctx.fillRect(x,y,2,cs);});
     } else {
-      faceDetected = false;
-      faceBar.classList.remove('show');
-      captureBtn.disabled = true;
-      captureTxt.textContent = 'No face detected';
-      captureHint.textContent = 'Center your face in the camera view.';
+      faceDetected=false; faceBar.classList.remove('show'); captureBtn.disabled=true;
+      captureTxt.textContent='No face detected'; captureHint.textContent='Center your face in the camera.';
     }
-  }, 200);
+  },200);
 }
 
-// ── CAPTURE ────────────────────────────────────────────────
-captureBtn.addEventListener('click', async () => {
-  if (!faceDetected) return;
-  captureBtn.disabled = true;
-  captureTxt.textContent = 'Analyzing…';
-
-  // Get descriptor
-  const det = await faceapi
-    .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
-    .withFaceLandmarks()
-    .withFaceDescriptor();
-
-  if (!det) {
-    toast('No face found. Try again.', 'error');
-    captureBtn.disabled = false;
-    captureTxt.textContent = 'Capture Photo';
-    return;
-  }
-
-  capturedDescriptor = det.descriptor;
-
-  // Check for duplicates
-  const dup = checkDuplicate(capturedDescriptor);
-  if (dup) {
-    document.getElementById('duplicateMsg').textContent =
-      `"${dup.name}" (ID: ${dup.studentId}) is already registered with this face.`;
+captureBtn.addEventListener('click', async()=>{
+  if(!faceDetected)return;
+  captureBtn.disabled=true; captureTxt.textContent='Analyzing…';
+  const det=await faceapi.detectSingleFace(video,new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+  if(!det){toast('No face found. Try again.','error'); captureBtn.disabled=false; captureTxt.textContent='Capture Photo'; return;}
+  capturedDescriptor=det.descriptor;
+  const dup=checkDuplicate(capturedDescriptor);
+  if(dup){
+    document.getElementById('duplicateMsg').textContent=`"${dup.name}" (${dup.studentId}) is already registered with this face.`;
     document.getElementById('duplicateAlert').classList.add('show');
-    captureBtn.disabled = false;
-    captureTxt.textContent = 'Capture Photo';
-    return;
+    captureBtn.disabled=false; captureTxt.textContent='Capture Photo'; return;
   }
   document.getElementById('duplicateAlert').classList.remove('show');
-
-  // Capture photo
-  const canvas = document.createElement('canvas');
-  canvas.width  = video.videoWidth;
-  canvas.height = video.videoHeight;
-  canvas.getContext('2d').drawImage(video, 0, 0);
-  capturedPhotoDataUrl = canvas.toDataURL('image/jpeg', 0.85);
-
-  // Show preview
-  photoPreview.src = capturedPhotoDataUrl;
-  photoPreview.classList.add('show');
-
-  // Stop camera
-  clearInterval(detectionInterval);
-  stream.getTracks().forEach(t => t.stop());
-
-  toast('Face captured successfully!', 'success');
-  goToForm();
+  const canvas=document.createElement('canvas'); canvas.width=video.videoWidth; canvas.height=video.videoHeight;
+  canvas.getContext('2d').drawImage(video,0,0); capturedPhotoDataUrl=canvas.toDataURL('image/jpeg',0.85);
+  photoPreview.src=capturedPhotoDataUrl; photoPreview.classList.add('show');
+  clearInterval(detectionInterval); stream.getTracks().forEach(t=>t.stop());
+  toast('Face captured!','success'); goToForm();
 });
 
-function checkDuplicate(descriptor) {
-  const THRESHOLD = 0.45;
-  for (const s of storedDescriptors) {
-    const dist = faceapi.euclideanDistance(descriptor, s.descriptor);
-    if (dist < THRESHOLD) return s;
-  }
-  return null;
-}
+function checkDuplicate(d){ const T=0.45; for(const s of storedDescriptors){ if(faceapi.euclideanDistance(d,s.descriptor)<T)return s; } return null; }
 
-// ── NAVIGATION ────────────────────────────────────────────
-function setStep(n) {
-  [1,2,3].forEach(i => {
-    const tab = document.getElementById(`step-tab-${i}`);
-    tab.classList.remove('active','done');
-    if (i < n) tab.classList.add('done');
-    else if (i === n) tab.classList.add('active');
-  });
-}
+function setStep(n){ [1,2,3].forEach(i=>{ const t=document.getElementById(`step-tab-${i}`); t.classList.remove('active','done'); if(i<n)t.classList.add('done'); else if(i===n)t.classList.add('active'); }); }
 
-function goToForm() {
-  document.getElementById('stepCamera').style.display = 'none';
-  document.getElementById('stepForm').style.display = 'block';
-  document.getElementById('stepConfirm').style.display = 'none';
-  setStep(2);
-}
+function goToForm(){ document.getElementById('stepCamera').style.display='none'; document.getElementById('stepForm').style.display='block'; document.getElementById('stepConfirm').style.display='none'; setStep(2); }
+window.goToForm=goToForm;
 
-function goBack() {
-  document.getElementById('stepCamera').style.display = 'block';
-  document.getElementById('stepForm').style.display = 'none';
-  capturedDescriptor = null;
-  capturedPhotoDataUrl = null;
-  photoPreview.classList.remove('show');
-  // Restart camera
-  startCamera().then(() => startDetectionLoop());
-  setStep(1);
-}
+window.goBack=function(){ document.getElementById('stepCamera').style.display='block'; document.getElementById('stepForm').style.display='none'; capturedDescriptor=null; capturedPhotoDataUrl=null; photoPreview.classList.remove('show'); document.getElementById('duplicateAlert').classList.remove('show'); startCamera().then(()=>startDetectionLoop()); setStep(1); };
 
-function goToForm_() { goToForm(); }
-
-window.goBack = goBack;
-window.goToForm = () => {
-  document.getElementById('stepCamera').style.display = 'none';
-  document.getElementById('stepForm').style.display = 'block';
-  document.getElementById('stepConfirm').style.display = 'none';
-  setStep(2);
+window.goToConfirm=function(){
+  const fields=['fullName','studentId','dob','email','phone','course','year']; const vals={};
+  for(const f of fields){ const el=document.getElementById(f); if(!el.value.trim()){toast('Fill in all fields.','error'); el.focus(); return;} vals[f]=el.value.trim(); }
+  document.getElementById('confirmPhoto').src=capturedPhotoDataUrl;
+  const labels={fullName:'Full Name',studentId:'Student ID',dob:'Date of Birth',email:'Email',phone:'Phone',course:'Course',year:'Year'};
+  document.getElementById('confirmDetails').innerHTML=Object.entries(vals).map(([k,v])=>`<div class="detail-item"><label>${labels[k]}</label><p>${v}</p></div>`).join('');
+  document.getElementById('stepForm').style.display='none'; document.getElementById('stepConfirm').style.display='block'; setStep(3);
 };
 
-window.goToConfirm = () => {
-  const fields = ['fullName','studentId','dob','email','phone','course','year'];
-  const vals = {};
-  for (const f of fields) {
-    const el = document.getElementById(f);
-    if (!el.value.trim()) { toast('Please fill in all fields.', 'error'); el.focus(); return; }
-    vals[f] = el.value.trim();
-  }
-
-  // Populate confirm
-  document.getElementById('confirmPhoto').src = capturedPhotoDataUrl;
-  const labels = {
-    fullName:'Full Name', studentId:'Student ID', dob:'Date of Birth',
-    email:'Email', phone:'Phone', course:'Course', year:'Year of Study'
-  };
-  document.getElementById('confirmDetails').innerHTML = Object.entries(vals)
-    .map(([k,v]) => `<div class="detail-item"><label>${labels[k]}</label><p>${v}</p></div>`)
-    .join('');
-
-  document.getElementById('stepForm').style.display = 'none';
-  document.getElementById('stepConfirm').style.display = 'block';
-  setStep(3);
-};
-
-// ── SUBMIT ────────────────────────────────────────────────
-window.submitRegistration = async () => {
-  const btn = document.getElementById('submitBtn');
-  const txt = document.getElementById('submitBtnText');
-  btn.disabled = true;
-  txt.innerHTML = '<span class="spinner"></span> Saving…';
-
+window.submitRegistration=async function(){
+  const btn=document.getElementById('submitBtn'), txt=document.getElementById('submitBtnText');
+  btn.disabled=true; txt.innerHTML='<span class="spinner"></span> Saving…';
   try {
-    if (!window._firebaseReady) throw new Error('Firebase not initialized. Check your config.');
-
-    // Compress photo to thumbnail and store as base64 in Firestore (no Storage needed)
-    let photoBase64 = '';
+    if(!window._fbReady) throw new Error('Firebase not ready. Check config.');
+    let photoBase64='';
     try {
-      const thumb = document.createElement('canvas');
-      thumb.width = 120; thumb.height = 90;
-      await new Promise(res => {
-        const img = new Image();
-        img.onload = () => { thumb.getContext('2d').drawImage(img, 0, 0, 120, 90); res(); };
-        img.src = capturedPhotoDataUrl;
-      });
-      photoBase64 = thumb.toDataURL('image/jpeg', 0.6);
-    } catch(e) {
-      console.warn('Photo compress failed:', e);
-      photoBase64 = capturedPhotoDataUrl;
-    }
-
-    // Convert descriptor to plain object
-    const descObj = {};
-    capturedDescriptor.forEach((v, i) => descObj[i] = v);
-
-    await window._addDoc(window._collection(window._db, 'students'), {
-      fullName:   document.getElementById('fullName').value.trim(),
-      studentId:  document.getElementById('studentId').value.trim(),
-      dob:        document.getElementById('dob').value,
-      email:      document.getElementById('email').value.trim(),
-      phone:      document.getElementById('phone').value.trim(),
-      course:     document.getElementById('course').value,
-      year:       document.getElementById('year').value,
-      photoURL:   photoBase64,
-      descriptor: descObj,
-      registeredAt: window._serverTimestamp()
+      const thumb=document.createElement('canvas'); thumb.width=120; thumb.height=90;
+      await new Promise(r=>{ const img=new Image(); img.onload=()=>{ thumb.getContext('2d').drawImage(img,0,0,120,90); r(); }; img.src=capturedPhotoDataUrl; });
+      photoBase64=thumb.toDataURL('image/jpeg',0.6);
+    } catch(e){}
+    const descObj={}; capturedDescriptor.forEach((v,i)=>descObj[i]=v);
+    await window._add(window._col(window._db,'students'),{
+      fullName:document.getElementById('fullName').value.trim(),
+      studentId:document.getElementById('studentId').value.trim(),
+      dob:document.getElementById('dob').value,
+      email:document.getElementById('email').value.trim(),
+      phone:document.getElementById('phone').value.trim(),
+      course:document.getElementById('course').value,
+      year:document.getElementById('year').value,
+      photoURL:photoBase64, descriptor:descObj, registeredAt:window._ts()
     });
-
-    document.getElementById('stepConfirm').style.display = 'none';
+    document.getElementById('stepConfirm').style.display='none';
     document.getElementById('stepSuccess').classList.add('show');
-    document.getElementById('stepsBar').style.display = 'none';
-    toast('Student registered!', 'success');
-
-  } catch(e) {
-    console.error(e);
-    toast('Error: ' + e.message, 'error');
-    btn.disabled = false;
-    txt.textContent = 'Submit Registration';
-  }
+    document.getElementById('stepsBar').style.display='none';
+    toast('Registered successfully!','success');
+  } catch(e){ toast('Error: '+e.message,'error'); btn.disabled=false; txt.textContent='Submit Registration'; }
 };
 
-window.resetAll = () => location.reload();
+window.resetAll=()=>location.reload();
 
-// ── TOAST ────────────────────────────────────────────────
-function toast(msg, type='success') {
-  const icons = { success:'✓', error:'✕', warn:'!' };
-  const t = document.createElement('div');
-  t.className = `toast ${type}`;
-  t.innerHTML = `<span>${icons[type]||'i'}</span> ${msg}`;
-  document.getElementById('toastContainer').appendChild(t);
-  setTimeout(() => { t.style.opacity='0'; setTimeout(()=>t.remove(), 300); }, 3500);
-}
-window.toast = toast;
+function toast(msg,type='success'){ const icons={success:'✓',error:'✕',warn:'!'}; const t=document.createElement('div'); t.className=`toast ${type}`; t.innerHTML=`<span>${icons[type]||'i'}</span>${msg}`; document.getElementById('toastContainer').appendChild(t); setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),300);},3500); }
+window.toast=toast;
 </script>
 </body>
 </html>
