@@ -7,16 +7,17 @@
   <link rel="manifest" href="manifest.json"/>
   <title>Attendance — EduReg</title>
   <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 </head>
 <body>
 <nav class="nav">
   <div class="nav-inner">
     <a href="index.html" class="nav-logo"><span class="nav-logo-dot"></span>EduReg</a>
     <div class="nav-links">
-      <a href="index.html" class="nav-link">Register</a>
-      <a href="attendance.html" class="nav-link active">Attendance</a>
-      <a href="about.html" class="nav-link">About</a>
-      <a href="admin.html" class="nav-link">Admin →</a>
+      <a href="index.html" class="nav-link"><i class="fa-solid fa-clipboard-list fa-sm"></i> Register</a>
+      <a href="attendance.html" class="nav-link active"><i class="fa-solid fa-check-double fa-sm"></i> Attendance</a>
+      <a href="about.html" class="nav-link"><i class="fa-solid fa-circle-info fa-sm"></i> About</a>
+      <a href="admin.html" class="nav-link"><i class="fa-solid fa-lock fa-sm"></i> Admin</a>
     </div>
     <button class="nav-burger" id="burgerBtn" onclick="toggleMenu()" aria-label="Menu">
       <span></span><span></span><span></span>
@@ -24,10 +25,10 @@
   </div>
 </nav>
 <div class="nav-drawer" id="navDrawer">
-  <a href="index.html" class="nav-link">📋 Register</a>
-  <a href="attendance.html" class="nav-link active">✅ Attendance</a>
-  <a href="about.html" class="nav-link">👤 About</a>
-  <a href="admin.html" class="nav-link">🔒 Admin Panel</a>
+  <a href="index.html" class="nav-link"><i class="fa-solid fa-clipboard-list"></i> Register</a>
+  <a href="attendance.html" class="nav-link active"><i class="fa-solid fa-check-double"></i> Attendance</a>
+  <a href="about.html" class="nav-link"><i class="fa-solid fa-circle-info"></i> About</a>
+  <a href="admin.html" class="nav-link"><i class="fa-solid fa-lock"></i> Admin Panel</a>
 </div>
 
 <div class="container" style="padding-bottom:80px;">
@@ -57,6 +58,9 @@
       <div class="face-detected-bar" id="qrSuccessBar" style="background:linear-gradient(to top, rgba(6,10,8,0.95),transparent);">
         <div class="face-dot"></div><span id="qrSuccessText">QR scanned!</span>
       </div>
+      <button class="cam-switch-btn" id="qrCamSwitchBtn" onclick="switchQRCamera()" title="Switch camera" aria-label="Switch camera">
+        <i class="fa-solid fa-camera-rotate"></i>
+      </button>
     </div>
 
     <div class="alert alert-danger" id="qrErrorAlert">
@@ -115,6 +119,9 @@
       <div class="face-detected-bar" id="faceFaceBar">
         <div class="face-dot"></div><span>Face detected — ready</span>
       </div>
+      <button class="cam-switch-btn" id="faceCamSwitchBtn" onclick="switchFaceCamera()" title="Switch camera" aria-label="Switch camera">
+        <i class="fa-solid fa-camera-rotate"></i>
+      </button>
     </div>
 
     <div style="text-align:center;margin-top:8px;">
@@ -170,6 +177,7 @@ document.getElementById('navDrawer').querySelectorAll('.nav-link').forEach(l=>l.
 
 const MODEL_URL='https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.14/model/';
 let storedStudents=[], validatedSession=null, faceStream=null, faceDetInt=null, faceFaceDetected=false, modelsLoaded=false;
+let qrFacingMode='environment', faceFacingMode='user';
 
 // Load models + students on start
 window.addEventListener('load', async()=>{
@@ -180,7 +188,11 @@ window.addEventListener('load', async()=>{
 
 async function loadFaceModels(){
   try {
-    await Promise.all([faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)]);
+    await Promise.all([
+      faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+      faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+      faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+    ]);
     modelsLoaded=true;
   } catch(e){ console.warn('Model load failed',e); }
 }
@@ -198,25 +210,34 @@ async function loadStudents(){
 // ── QR SCANNING ──────────────────────────────────────
 let qrStream=null, qrInterval=null;
 
-async function startQRCamera(){
+async function startQRCamera(facingMode){
+  facingMode = facingMode || qrFacingMode;
+  if(qrStream){ qrStream.getTracks().forEach(t=>t.stop()); clearInterval(qrInterval); }
   try {
-    qrStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:640,height:480}});
+    qrStream=await navigator.mediaDevices.getUserMedia({video:{facingMode,width:{ideal:640},height:{ideal:480}}});
     const v=document.getElementById('qrVideo'); v.srcObject=qrStream;
-    v.addEventListener('play',()=>{
-      const canvas=document.getElementById('qrCanvas');
-      qrInterval=setInterval(()=>{
-        if(v.paused||v.ended)return;
-        canvas.width=v.videoWidth; canvas.height=v.videoHeight;
-        const ctx=canvas.getContext('2d'); ctx.drawImage(v,0,0);
-        const img=ctx.getImageData(0,0,canvas.width,canvas.height);
-        const code=jsQR(img.data,img.width,img.height,{inversionAttempts:'dontInvert'});
-        if(code) handleQRCode(code.data);
-      },300);
-    });
+    v.addEventListener('loadedmetadata',()=>{
+      v.play().then(()=>{
+        const canvas=document.getElementById('qrCanvas');
+        qrInterval=setInterval(()=>{
+          if(v.paused||v.ended||v.videoWidth===0)return;
+          canvas.width=v.videoWidth; canvas.height=v.videoHeight;
+          const ctx=canvas.getContext('2d'); ctx.drawImage(v,0,0);
+          const img=ctx.getImageData(0,0,canvas.width,canvas.height);
+          const code=jsQR(img.data,img.width,img.height,{inversionAttempts:'dontInvert'});
+          if(code) handleQRCode(code.data);
+        },200);
+      }).catch(()=>{});
+    },{once:true});
   } catch(e){
     document.getElementById('qrStatus').textContent='Camera denied. Allow camera access.';
   }
 }
+
+window.switchQRCamera=async function(){
+  qrFacingMode = qrFacingMode==='environment'?'user':'environment';
+  await startQRCamera(qrFacingMode);
+};
 
 function handleQRCode(data){
   try {
@@ -224,7 +245,6 @@ function handleQRCode(data){
     if(payload.type!=='edureg_session') throw new Error('Not an EduReg QR');
     const now=Date.now();
     if(now > payload.expires) throw new Error('QR code has expired');
-    // Valid!
     clearInterval(qrInterval);
     if(qrStream) qrStream.getTracks().forEach(t=>t.stop());
     validatedSession=payload;
@@ -250,22 +270,35 @@ window.goToFaceScan=function(){
 };
 
 // ── FACE CAMERA ──────────────────────────────────────
-async function startFaceCamera(){
+async function startFaceCamera(facingMode){
+  facingMode = facingMode || faceFacingMode;
+  if(faceStream){ faceStream.getTracks().forEach(t=>t.stop()); clearInterval(faceDetInt); }
   document.getElementById('faceStatus').textContent='Starting camera…';
   document.getElementById('faceHint').textContent='Loading…';
   try {
-    faceStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:640,height:480}});
+    faceStream=await navigator.mediaDevices.getUserMedia({video:{facingMode,width:{ideal:640},height:{ideal:480}}});
     const v=document.getElementById('faceVideo'); v.srcObject=faceStream;
-    v.addEventListener('play',startFaceLoop);
+    v.addEventListener('loadedmetadata',()=>{ v.play().then(()=>startFaceLoop()).catch(()=>{}); },{once:true});
   } catch(e){ document.getElementById('faceStatus').textContent='Camera denied.'; }
 }
+
+window.switchFaceCamera=async function(){
+  faceFacingMode = faceFacingMode==='user'?'environment':'user';
+  faceFaceDetected=false;
+  document.getElementById('faceFaceBar').classList.remove('show');
+  document.getElementById('markAttBtn').disabled=true;
+  document.getElementById('markAttTxt').textContent='Switching…';
+  await startFaceCamera(faceFacingMode);
+};
 
 function startFaceLoop(){
   if(!modelsLoaded){setTimeout(startFaceLoop,400);return;}
   const v=document.getElementById('faceVideo'), ov=document.getElementById('faceOverlay');
   ov.width=v.videoWidth; ov.height=v.videoHeight;
+  if(faceDetInt) clearInterval(faceDetInt);
   faceDetInt=setInterval(async()=>{
-    const det=await faceapi.detectSingleFace(v,new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+    if(v.paused||v.ended||v.videoWidth===0)return;
+    const det=await faceapi.detectSingleFace(v,new faceapi.TinyFaceDetectorOptions({inputSize:224,scoreThreshold:0.5})).withFaceLandmarks().withFaceDescriptor();
     const ctx=ov.getContext('2d'); ctx.clearRect(0,0,ov.width,ov.height);
     if(det){
       faceFaceDetected=true;
@@ -280,7 +313,7 @@ function startFaceLoop(){
       document.getElementById('markAttBtn').disabled=true;
       document.getElementById('markAttTxt').textContent='Waiting for face…';
     }
-  },250);
+  },150);
 }
 
 // ── MARK ATTENDANCE ──────────────────────────────────
@@ -290,10 +323,9 @@ window.markAttendance=async function(){
   btn.disabled=true; txt.innerHTML='<span class="spinner"></span> Verifying…';
 
   const v=document.getElementById('faceVideo');
-  const det=await faceapi.detectSingleFace(v,new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+  const det=await faceapi.detectSingleFace(v,new faceapi.TinyFaceDetectorOptions({inputSize:224})).withFaceLandmarks().withFaceDescriptor();
   if(!det){ toast('Face not clear. Try again.','error'); btn.disabled=false; txt.textContent='Mark My Attendance'; return; }
 
-  // Match face
   let match=null, bestDist=0.5;
   for(const s of storedStudents){
     const dist=faceapi.euclideanDistance(det.descriptor,s.descriptor);
@@ -308,9 +340,7 @@ window.markAttendance=async function(){
   const result=document.getElementById('attResult');
 
   if(match){
-    // Check not already marked today
     try {
-      const today=new Date(); today.setHours(0,0,0,0);
       const snap=await window._getDocs(window._query(window._col(window._db,'attendance'),window._where('studentDocId','==',match.id),window._where('module','==',module),window._where('sessionId','==',validatedSession.id)));
       if(!snap.empty){
         result.className='attendance-result show fail-res';
@@ -321,7 +351,6 @@ window.markAttendance=async function(){
       }
     } catch(e){}
 
-    // Save attendance
     try {
       await window._addDoc(window._col(window._db,'attendance'),{
         studentDocId:match.id, studentId:match.studentId, fullName:match.fullName,
