@@ -8,6 +8,8 @@
   <title>Admin — EduReg</title>
   <link rel="stylesheet" href="style.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <!-- Use stable QR code library -->
+  <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
 </head>
 <body>
 
@@ -178,7 +180,7 @@
             <h3 id="qrSessionLabel">Session QR</h3>
             <p id="qrSessionInfo">Show this to your students</p>
             <div style="display:flex;justify-content:center;margin:16px 0;">
-              <div class="qr-display" id="qrContainer" style="width:220px;height:220px;display:flex;align-items:center;justify-content:center;background:#fff;border-radius:12px;"></div>
+              <div id="qrContainer" style="width:220px;height:220px;background:#fff;border-radius:12px;display:flex;align-items:center;justify-content:center;"></div>
             </div>
             <div class="session-timer" id="sessionTimer">--:--</div>
             <p style="font-size:12px;color:var(--text-dim);">QR expires when timer reaches 0:00</p>
@@ -268,6 +270,7 @@ const ADMIN_PASSWORD = "admin1234";
 
 let allStudents=[], allAttendance=[], selectedDocId=null;
 let sessionTimerInterval=null, liveUnsubscribe=null, currentSessionId=null;
+let currentQRCode = null;
 
 // ── LIGHTBOX ─────────────────────────────────
 function openLightbox(src){ if(!src)return; document.getElementById('lightboxImg').src=src; document.getElementById('lightboxBackdrop').classList.add('show'); document.body.style.overflow='hidden'; }
@@ -300,18 +303,18 @@ async function loadAll(){
 window.loadAll=loadAll;
 
 async function loadStudents(){
-  document.getElementById('studentsTable').innerHTML=`<tr><td colspan="7"><div class="empty-state"><div style="font-size:28px;"><i class="fa-solid fa-spinner fa-spin"></i></div><p>Loading…</p></div></td></tr>`;
+  document.getElementById('studentsTable').innerHTML='<tr><td colspan="7"><div class="empty-state"><div style="font-size:28px;"><i class="fa-solid fa-spinner fa-spin"></i></div><p>Loading…</p></div></td></tr>';
   try {
     const q=window._q(window._col(window._db,'students'),window._orderBy('registeredAt','desc'));
     const snap=await window._getDocs(q);
     allStudents=[];
     snap.forEach(d=>allStudents.push({id:d.id,...d.data()}));
     renderStudents(allStudents); updateStats();
-  } catch(e){ document.getElementById('studentsTable').innerHTML=`<tr><td colspan="7"><div class="empty-state"><p>Error: ${e.message}</p></div></td></tr>`; }
+  } catch(e){ document.getElementById('studentsTable').innerHTML='<tr><td colspan="7"><div class="empty-state"><p>Error: '+e.message+'</p></div></td></tr>'; }
 }
 
 async function loadAttendance(){
-  document.getElementById('attendanceTable').innerHTML=`<tr><td colspan="5"><div class="empty-state"><div style="font-size:28px;"><i class="fa-solid fa-spinner fa-spin"></i></div><p>Loading…</p></div></td></tr>`;
+  document.getElementById('attendanceTable').innerHTML='<tr><td colspan="5"><div class="empty-state"><div style="font-size:28px;"><i class="fa-solid fa-spinner fa-spin"></i></div><p>Loading…</p></div></td></tr>';
   try {
     const q=window._q(window._col(window._db,'attendance'),window._orderBy('markedAt','desc'));
     const snap=await window._getDocs(q);
@@ -323,14 +326,14 @@ async function loadAttendance(){
     [...modules].sort().forEach(m=>{ const o=document.createElement('option'); o.value=o.textContent=m; sel.appendChild(o); });
     renderAttendance(allAttendance);
     updateStats();
-  } catch(e){ document.getElementById('attendanceTable').innerHTML=`<tr><td colspan="5"><div class="empty-state"><p>Error: ${e.message}</p></div></td></tr>`; }
+  } catch(e){ document.getElementById('attendanceTable').innerHTML='<tr><td colspan="5"><div class="empty-state"><p>Error: '+e.message+'</p></div></td></tr>'; }
 }
 
 // ── RENDER STUDENTS ───────────────────────────
 function renderStudents(students){
   const tbody=document.getElementById('studentsTable');
   document.getElementById('resultCount').textContent=students.length?`Showing ${students.length} student${students.length!==1?'s':''}`:'' ;
-  if(!students.length){ tbody.innerHTML=`<tr><td colspan="7"><div class="empty-state"><div style="font-size:28px;"><i class="fa-solid fa-user-slash"></i></div><p>No students found.</p></div></td></tr>`; return; }
+  if(!students.length){ tbody.innerHTML='<tr><td colspan="7"><div class="empty-state"><div style="font-size:28px;"><i class="fa-solid fa-user-slash"></i></div><p>No students found.</p></div></td></tr>'; return; }
   tbody.innerHTML=students.map(s=>{
     const avatar=s.photoURL
       ?`<img class="td-avatar" src="${s.photoURL}" alt="${esc(s.fullName)}" style="object-fit:cover;cursor:zoom-in;" onclick="openLightbox('${s.photoURL}')" title="View photo"/>`
@@ -352,7 +355,7 @@ function renderStudents(students){
 function renderAttendance(records){
   const tbody=document.getElementById('attendanceTable');
   document.getElementById('attCount').textContent=records.length?`${records.length} record${records.length!==1?'s':''}`:'' ;
-  if(!records.length){ tbody.innerHTML=`<tr><td colspan="5"><div class="empty-state"><div style="font-size:28px;"><i class="fa-solid fa-clipboard"></i></div><p>No attendance records yet.</p></div></td></tr>`; return; }
+  if(!records.length){ tbody.innerHTML='<tr><td colspan="5"><div class="empty-state"><div style="font-size:28px;"><i class="fa-solid fa-clipboard"></i></div><p>No attendance records yet.</p></div></td></tr>'; return; }
   tbody.innerHTML=records.map(r=>{
     const avatar=r.photoURL
       ?`<img class="td-avatar" src="${r.photoURL}" alt="${esc(r.fullName)}" style="object-fit:cover;cursor:zoom-in;" onclick="openLightbox('${r.photoURL}')" title="View photo"/>`
@@ -415,11 +418,11 @@ function generateQR() {
   document.getElementById('qrSessionLabel').textContent = label;
   document.getElementById('qrSessionInfo').textContent = `Valid for ${duration} min · Session ID: ${currentSessionId.slice(-8)}`;
   
-  // Clear container and create canvas
+  // Clear container
   const container = document.getElementById('qrContainer');
   container.innerHTML = '';
   
-  // Create canvas element
+  // Create QR code using HTML5 Canvas (built-in method)
   const canvas = document.createElement('canvas');
   canvas.width = 220;
   canvas.height = 220;
@@ -427,64 +430,38 @@ function generateQR() {
   canvas.style.height = '220px';
   container.appendChild(canvas);
   
-  // Generate QR code using built-in QR code generation (no external library needed)
-  try {
-    // Simple QR code generator using canvas
-    generateSimpleQR(canvas, payload, 220);
-    toast('QR code generated successfully!', 'success');
-  } catch(e) {
-    console.error('QR generation error:', e);
-    container.innerHTML = '<div style="color:var(--danger);text-align:center;padding:20px;">⚠️ QR Error<br><small>Try again</small></div>';
-    toast('Failed to generate QR code', 'error');
+  // Generate QR code using QRCode library
+  if (typeof QRCode !== 'undefined') {
+    QRCode.toCanvas(canvas, payload, { width: 220, margin: 1 }, function(error) {
+      if (error) {
+        console.error('QR generation error:', error);
+        generateFallbackQR(canvas, payload);
+      } else {
+        toast('QR code generated!', 'success');
+      }
+    });
+  } else {
+    // Fallback: generate simple QR using canvas
+    generateFallbackQR(canvas, payload);
   }
   
   startSessionTimer(expires, duration);
   startLiveFeed(currentSessionId);
 }
 
-// Simple QR code generator using canvas (pure JS, no external dependencies)
-function generateSimpleQR(canvas, text, size) {
+function generateFallbackQR(canvas, text) {
   const ctx = canvas.getContext('2d');
   ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, 0, size, size);
-  
-  // Create a simple visual QR representation (for demo - in production use proper QR library)
-  // Since we need proper QR encoding, we'll use a data URL approach with proper QR library
-  // Load QR code library dynamically
-  if (typeof QRCode === 'undefined') {
-    // Load QRCode library dynamically
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
-    script.onload = function() {
-      QRCode.toCanvas(canvas, text, { width: size, margin: 1 }, function(error) {
-        if (error) {
-          console.error('QR error:', error);
-          fallbackQR(canvas, text, size);
-        }
-      });
-    };
-    script.onerror = function() {
-      fallbackQR(canvas, text, size);
-    };
-    document.head.appendChild(script);
-  } else {
-    QRCode.toCanvas(canvas, text, { width: size, margin: 1 }, function(error) {
-      if (error) {
-        console.error('QR error:', error);
-        fallbackQR(canvas, text, size);
-      }
-    });
-  }
-}
-
-function fallbackQR(canvas, text, size) {
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, 0, size, size);
+  ctx.fillRect(0, 0, 220, 220);
   ctx.fillStyle = '#000000';
-  ctx.font = '12px monospace';
-  ctx.fillText('QR Code', size/2 - 30, size/2);
-  ctx.fillText(text.substring(0, 20) + '...', 10, size - 20);
+  ctx.font = 'bold 16px monospace';
+  ctx.fillText('QR CODE', 65, 100);
+  ctx.font = '10px monospace';
+  const shortText = text.length > 30 ? text.substring(0, 27) + '...' : text;
+  ctx.fillText(shortText, 10, 150);
+  ctx.fillText('Scan with', 10, 180);
+  ctx.fillText('EduReg app', 10, 200);
+  toast('QR library loading, using fallback', 'warn');
 }
 
 function startSessionTimer(expires, totalMin) {
