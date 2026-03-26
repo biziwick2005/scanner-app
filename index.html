@@ -9,6 +9,7 @@
   <link rel="apple-touch-icon" href="icon-192.png"/>
   <title>EduReg — Student Registration</title>
   <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 </head>
 <body>
 
@@ -16,10 +17,10 @@
   <div class="nav-inner">
     <a href="index.html" class="nav-logo"><span class="nav-logo-dot"></span>EduReg</a>
     <div class="nav-links">
-      <a href="index.html" class="nav-link active">Register</a>
-      <a href="attendance.html" class="nav-link">Attendance</a>
-      <a href="about.html" class="nav-link">About</a>
-      <a href="admin.html" class="nav-link">Admin →</a>
+      <a href="index.html" class="nav-link active"><i class="fa-solid fa-clipboard-list fa-sm"></i> Register</a>
+      <a href="attendance.html" class="nav-link"><i class="fa-solid fa-check-double fa-sm"></i> Attendance</a>
+      <a href="about.html" class="nav-link"><i class="fa-solid fa-circle-info fa-sm"></i> About</a>
+      <a href="admin.html" class="nav-link"><i class="fa-solid fa-lock fa-sm"></i> Admin</a>
     </div>
     <button class="nav-burger" id="burgerBtn" onclick="toggleMenu()" aria-label="Menu">
       <span></span><span></span><span></span>
@@ -27,10 +28,10 @@
   </div>
 </nav>
 <div class="nav-drawer" id="navDrawer">
-  <a href="index.html" class="nav-link active">📋 Register</a>
-  <a href="attendance.html" class="nav-link">✅ Attendance</a>
-  <a href="about.html" class="nav-link">👤 About</a>
-  <a href="admin.html" class="nav-link">🔒 Admin Panel</a>
+  <a href="index.html" class="nav-link active"><i class="fa-solid fa-clipboard-list"></i> Register</a>
+  <a href="attendance.html" class="nav-link"><i class="fa-solid fa-check-double"></i> Attendance</a>
+  <a href="about.html" class="nav-link"><i class="fa-solid fa-circle-info"></i> About</a>
+  <a href="admin.html" class="nav-link"><i class="fa-solid fa-lock"></i> Admin Panel</a>
 </div>
 
 <div class="container" style="padding-bottom:80px;">
@@ -66,9 +67,12 @@
         <div class="face-detected-bar" id="faceBar">
           <div class="face-dot"></div><span id="faceBarText">Face detected</span>
         </div>
+        <button class="cam-switch-btn" id="camSwitchBtn" onclick="switchCamera()" title="Switch camera" aria-label="Switch camera">
+          <i class="fa-solid fa-camera-rotate"></i>
+        </button>
       </div>
       <div style="display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;margin-top:4px;">
-        <img id="photoPreview" class="photo-preview" src="" alt=""/>
+        <img id="photoPreview" class="photo-preview" src="" alt="" onclick="openLightbox(this.src)" style="cursor:zoom-in;" title="Click to view full size"/>
         <div>
           <button class="btn btn-primary" id="captureBtn" disabled>
             <span id="captureBtnText">Waiting for face…</span>
@@ -145,7 +149,7 @@
 
 <!-- PWA INSTALL BANNER -->
 <div class="pwa-banner" id="pwaBanner">
-  <div class="pwa-banner-icon">🎓</div>
+  <div class="pwa-banner-icon"><i class="fa-solid fa-graduation-cap" style="color:#0a0f0d;font-size:20px;"></i></div>
   <div class="pwa-banner-text">
     <strong>Install EduReg</strong>
     <span>Add to home screen for quick access</span>
@@ -154,6 +158,12 @@
     <button class="btn btn-outline btn-sm pwa-dismiss" onclick="dismissPWA()">Not now</button>
     <button class="btn btn-primary btn-sm" onclick="installPWA()">Install</button>
   </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div id="lightboxBackdrop" class="lightbox-backdrop" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()"><i class="fa-solid fa-xmark"></i></button>
+  <img id="lightboxImg" class="lightbox-img" src="" alt=""/>
 </div>
 
 <div class="toast-container" id="toastContainer"></div>
@@ -184,7 +194,9 @@ window._getDocs = getDocs; window._ts = serverTimestamp; window._fbReady = true;
 <script>
 // ── PWA ─────────────────────────────────────────
 let deferredPrompt = null;
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW:', e));
+}
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault(); deferredPrompt = e;
   if (!localStorage.getItem('pwa_dismissed')) {
@@ -204,9 +216,16 @@ function toggleMenu() {
 window.toggleMenu = toggleMenu;
 document.getElementById('navDrawer').querySelectorAll('.nav-link').forEach(l => l.addEventListener('click', () => { document.getElementById('burgerBtn').classList.remove('open'); document.getElementById('navDrawer').classList.remove('open'); }));
 
+// ── LIGHTBOX ─────────────────────────────────────
+function openLightbox(src) { if(!src) return; document.getElementById('lightboxImg').src=src; document.getElementById('lightboxBackdrop').classList.add('show'); document.body.style.overflow='hidden'; }
+function closeLightbox() { document.getElementById('lightboxBackdrop').classList.remove('show'); document.body.style.overflow=''; }
+window.openLightbox=openLightbox; window.closeLightbox=closeLightbox;
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeLightbox(); });
+
 // ── STATE ────────────────────────────────────────
 let stream=null, capturedDescriptor=null, capturedPhotoDataUrl=null;
 let detectionInterval=null, faceDetected=false, modelsLoaded=false, storedDescriptors=[];
+let currentFacingMode = 'user';
 const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.14/model/';
 
 const video=document.getElementById('video'), overlay=document.getElementById('overlay');
@@ -220,17 +239,35 @@ window.addEventListener('load', async () => { await loadModels(); await startCam
 async function loadModels() {
   cameraStatus.textContent = 'Loading AI models…';
   try {
-    await Promise.all([faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL), faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL), faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)]);
+    await Promise.all([
+      faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+      faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+      faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+    ]);
     modelsLoaded=true; captureHint.textContent='Ready. Position your face.'; cameraStatus.textContent='Position your face in the circle';
   } catch(e) { captureHint.textContent='Model load failed. Check internet.'; }
 }
 
-async function startCamera() {
+async function startCamera(facingMode) {
+  facingMode = facingMode || currentFacingMode;
+  if(stream) { stream.getTracks().forEach(t=>t.stop()); clearInterval(detectionInterval); }
   try {
-    stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:640,height:480}});
-    video.srcObject=stream; video.addEventListener('play', startDetectionLoop);
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode, width: { ideal: 640 }, height: { ideal: 480 } }
+    });
+    video.srcObject = stream;
+    video.addEventListener('loadedmetadata', () => {
+      video.play().then(() => startDetectionLoop()).catch(()=>{});
+    }, { once: true });
   } catch(e) { cameraStatus.textContent='Camera denied. Please allow access.'; }
 }
+
+window.switchCamera = async function() {
+  currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+  faceDetected = false; faceBar.classList.remove('show');
+  captureBtn.disabled = true; captureTxt.textContent = 'Switching…';
+  await startCamera(currentFacingMode);
+};
 
 async function loadStoredDescriptors() {
   const wait=()=>new Promise(r=>{ if(window._fbReady)return r(); const iv=setInterval(()=>{ if(window._fbReady){clearInterval(iv);r();}},300); });
@@ -245,9 +282,10 @@ async function loadStoredDescriptors() {
 function startDetectionLoop() {
   if(!modelsLoaded){setTimeout(startDetectionLoop,500);return;}
   overlay.width=video.videoWidth; overlay.height=video.videoHeight;
+  if(detectionInterval) clearInterval(detectionInterval);
   detectionInterval=setInterval(async()=>{
-    if(!modelsLoaded||video.paused||video.ended)return;
-    const det=await faceapi.detectSingleFace(video,new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+    if(!modelsLoaded||video.paused||video.ended||video.videoWidth===0)return;
+    const det=await faceapi.detectSingleFace(video,new faceapi.TinyFaceDetectorOptions({inputSize:224,scoreThreshold:0.5})).withFaceLandmarks().withFaceDescriptor();
     const ctx=overlay.getContext('2d'); ctx.clearRect(0,0,overlay.width,overlay.height);
     if(det){
       faceDetected=true; cameraOverlay.classList.add('hidden'); faceBar.classList.add('show');
@@ -259,13 +297,13 @@ function startDetectionLoop() {
       faceDetected=false; faceBar.classList.remove('show'); captureBtn.disabled=true;
       captureTxt.textContent='No face detected'; captureHint.textContent='Center your face in the camera.';
     }
-  },200);
+  },150);
 }
 
 captureBtn.addEventListener('click', async()=>{
   if(!faceDetected)return;
   captureBtn.disabled=true; captureTxt.textContent='Analyzing…';
-  const det=await faceapi.detectSingleFace(video,new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+  const det=await faceapi.detectSingleFace(video,new faceapi.TinyFaceDetectorOptions({inputSize:224})).withFaceLandmarks().withFaceDescriptor();
   if(!det){toast('No face found. Try again.','error'); captureBtn.disabled=false; captureTxt.textContent='Capture Photo'; return;}
   capturedDescriptor=det.descriptor;
   const dup=checkDuplicate(capturedDescriptor);
@@ -289,12 +327,14 @@ function setStep(n){ [1,2,3].forEach(i=>{ const t=document.getElementById(`step-
 function goToForm(){ document.getElementById('stepCamera').style.display='none'; document.getElementById('stepForm').style.display='block'; document.getElementById('stepConfirm').style.display='none'; setStep(2); }
 window.goToForm=goToForm;
 
-window.goBack=function(){ document.getElementById('stepCamera').style.display='block'; document.getElementById('stepForm').style.display='none'; capturedDescriptor=null; capturedPhotoDataUrl=null; photoPreview.classList.remove('show'); document.getElementById('duplicateAlert').classList.remove('show'); startCamera().then(()=>startDetectionLoop()); setStep(1); };
+window.goBack=function(){ document.getElementById('stepCamera').style.display='block'; document.getElementById('stepForm').style.display='none'; capturedDescriptor=null; capturedPhotoDataUrl=null; photoPreview.classList.remove('show'); document.getElementById('duplicateAlert').classList.remove('show'); startCamera().then(()=>{}); setStep(1); };
 
 window.goToConfirm=function(){
   const fields=['fullName','studentId','dob','email','phone','course','year']; const vals={};
   for(const f of fields){ const el=document.getElementById(f); if(!el.value.trim()){toast('Fill in all fields.','error'); el.focus(); return;} vals[f]=el.value.trim(); }
   document.getElementById('confirmPhoto').src=capturedPhotoDataUrl;
+  document.getElementById('confirmPhoto').style.cursor='zoom-in';
+  document.getElementById('confirmPhoto').onclick=()=>openLightbox(capturedPhotoDataUrl);
   const labels={fullName:'Full Name',studentId:'Student ID',dob:'Date of Birth',email:'Email',phone:'Phone',course:'Course',year:'Year'};
   document.getElementById('confirmDetails').innerHTML=Object.entries(vals).map(([k,v])=>`<div class="detail-item"><label>${labels[k]}</label><p>${v}</p></div>`).join('');
   document.getElementById('stepForm').style.display='none'; document.getElementById('stepConfirm').style.display='block'; setStep(3);
